@@ -19,6 +19,7 @@ export const API_ENDPOINTS = {
 
   projects: {
     GET_ALL: "/projects",
+    GET_PROJECTS_BY_USER_ID: (userId: string) => `/projects/user/${userId}`,
     GET_PROJECT: (id: string) => `/projects/${id}`,
     CREATE_PROJECT: "/projects",
     UPDATE_PROJECT: (id: string) => `/projects/${id}`,

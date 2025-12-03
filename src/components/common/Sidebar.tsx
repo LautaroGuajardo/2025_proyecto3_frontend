@@ -13,14 +13,14 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
   return (
     <aside
       className={cn(
-        "transition-all duration-300 ease-in-out bg-white text-[#9197b3] flex flex-col justify-between overflow-y-auto border-r-[1px] border-r-[#eee]",
+        "transition-all duration-300 ease-in-out bg-white text-[#9197b3] flex flex-col justify-between overflow-y-auto border-r border-r-[#eee]",
         isOpen ? "w-24 text-xs lg:w-72 lg:text-lg" : "w-0 lg:w-16"
       )}
     >
       {/* Logo y navegación */}
       <div className="">
         <div className={`flex w-full justify-center ${isOpen && "p-4"}`}>
-          <Link title="Dashboard" to="/dashboard" className="flex items-center">
+          <Link title="Projects" to="/projects" className="flex items-center">
             <img
               src={isOpen ? "/logo/InvoIQLogo.png" : "/logo/InvoIQLogo.png"}
               alt="Logo"
@@ -39,7 +39,7 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
               to={item.to}
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col lg:flex-row items-center gap-2 lg:px-1 py-2 rounded-[8px] hover:bg-[#8061fc] hover:text-gray-100 transition",
+                  "flex flex-col lg:flex-row items-center gap-2 lg:px-1 py-2 rounded-xl hover:bg-[#8061fc] hover:text-gray-100 transition",
                   isActive && "bg-[#5932EA] text-white",
                   isOpen ? "justify-start px-1 lg:px-2" : "justify-center px-0"
                 )

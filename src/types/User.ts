@@ -1,8 +1,10 @@
 import type { Subarea } from "./Subarea";
 import { Role } from "./Role";
 
-export type User = {
+export interface User {
+  id: string;
   email: string;
+  password: string;
   firstName: string;
   lastName: string;
   active: boolean;
@@ -11,3 +13,12 @@ export type User = {
   fechaRegistro?: Date;
   subArea?: Subarea;
 };
+
+export interface UserFormData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  role: Role;
+  subArea?: Subarea;
+}
