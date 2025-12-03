@@ -111,7 +111,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       setAuthLoading(false);
 
       if (isPublicPathname) {
-        navigate("/dashboard", { replace: true });
+        navigate("/projects", { replace: true });
       } else {
         navigate(pathname);
       }

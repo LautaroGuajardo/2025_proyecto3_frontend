@@ -52,7 +52,7 @@ function App() {
               path={route.to}
               element={
                 isLoggedIn ? (
-                  <Navigate to="/dashboard" replace />
+                  <Navigate to="/projects" replace />
                 ) : (
                   route.element
                 )
@@ -62,7 +62,7 @@ function App() {
 
           <Route element={<RequireAuth />}>
             <Route path="/" element={<MainLayout />}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route index element={<Navigate to="/projects" replace />} />
               {dynamicRoutes.map((route) => (
                 <Route key={route.to} path={route.to} element={route.element} />
               ))}

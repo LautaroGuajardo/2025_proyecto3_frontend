@@ -6,6 +6,7 @@ export type UserWithPassword = User & { password: string };
 
 export const USERS: UserWithPassword[] = [
   {
+    id: "1",
     email: "admin1@example.com",
     firstName: "John",
     lastName: "Doe",
@@ -15,15 +16,17 @@ export const USERS: UserWithPassword[] = [
     password: "admin1pass",
   },
   {
-    email: "auditor1@example.com",
+    id: "2",
+    email: "customer1@example.com",
     firstName: "Jane",
     lastName: "Smith",
     active: true,
     role: Role.CUSTOMER,
     phone: "5559876543",
-    password: "auditor1pass",
+    password: "customer1pass",
   },
   {
+    id: "3",
     email: "user1@example.com",
     firstName: "Alice",
     lastName: "Johnson",
@@ -33,6 +36,7 @@ export const USERS: UserWithPassword[] = [
     password: "user1pass",
   },
   {
+    id: "4",
     email: "user2@example.com",
     firstName: "Bob",
     lastName: "Brown",
@@ -40,6 +44,16 @@ export const USERS: UserWithPassword[] = [
     role: Role.USER,
     phone: "5556789012",
     password: "user2pass",
+  },
+  {
+    id: "5",
+    email: "customer2@example.com",
+    firstName: "usuario",
+    lastName: "5",
+    active: true,
+    role: Role.CUSTOMER,
+    phone: "5559876543",
+    password: "customer2pass",
   },
 ];
 
@@ -51,10 +65,9 @@ class UserServiceMock implements IUserService {
     const index = USERS.findIndex((u) => u.email === user.email);
     if (index !== -1) {
       USERS[index] = { ...USERS[index], ...user };
-      const { password, ...userWithoutPassword } = USERS[index];
       return Promise.resolve({
         success: true,
-        user: userWithoutPassword,
+        user: USERS[index],
       });
     } else {
       return Promise.resolve({
@@ -66,6 +79,7 @@ class UserServiceMock implements IUserService {
   async getAllUsers(
     _token: string
   ): Promise<{ success: boolean; users?: User[]; message?: string }> {
+    void _token; // Evitar warning de variable no usada
     return {
       success: true,
       users: USERS,
@@ -95,8 +109,7 @@ class UserServiceMock implements IUserService {
           success: false,
           message: "Usuario no encontrado (mock)",
         });
-      const { password, ...userWithoutPassword } = user;
-      return Promise.resolve({ success: true, user: userWithoutPassword });
+      return Promise.resolve({ success: true, user });
     } catch {
       return Promise.resolve({
         success: false,

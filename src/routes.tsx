@@ -1,6 +1,7 @@
 import { lazy } from "react";
 
 import {
+  FolderSymlink,
   User
 } from "lucide-react";
 import { Role } from "./types/Role";
@@ -15,6 +16,8 @@ export type RouteItem = {
 
 const Login = lazy(() => import("@/pages/public/Login"));
 const Register = lazy(() => import("@/pages/public/Register"));
+
+const Projects = lazy(() => import("@/pages/private/Projects"));
 
 export const publicRoutes: RouteItem[] = [
   {
@@ -36,11 +39,17 @@ export function isPublicRoute(path: string): boolean {
 }
 
 export const roleBasedRoutes: Record<Role, RouteItem[]> = {
+  [Role.CUSTOMER]: [
+    {
+      label: "Projects",
+      to: "/projects",
+      icon: FolderSymlink,
+      element: <Projects />,
+    },
+  ],
   [Role.ADMIN]: [],
-  [Role.USER]: [],
-  [Role.CUSTOMER]: [],
+  [Role.USER]: [],  
 }
-
 
 export function getSidebarRoutesForRole(role: Role): RouteItem[] {
   const routes = roleBasedRoutes[role] || [];
