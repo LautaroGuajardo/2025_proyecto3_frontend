@@ -26,12 +26,40 @@ export const API_ENDPOINTS = {
     DELETE_PROJECT: (id: string) => `/projects/${id}`,
   },
 
+  projectTypes: {
+    GET_ALL: "/project-types",
+  },
+
+  claimStates: {
+    GET_ALL: "/claim-states",
+  },
+
+  claimTypes: {
+    GET_ALL: "/claim-types",
+  },
+
+  criticalities: {
+    GET_ALL: "/criticalities",
+  },
+
+  priorities: {
+    GET_ALL: "/priorities",
+  },
+
+  areas: {
+    GET_ALL: "/areas",
+  },
+
+  subareas: {
+    GET_ALL: "/sub-areas",
+  },
+
   claims: {
     GET_ALL: "/claims",
-    GET_CLAIM: (id: string) => `/claims/${id}`,
+    GET_CLAIM_BY_ID: (id: string) => `/claims/${id}`,
     CREATE_CLAIM: "/claims",
-    UPDATE_CLAIM: (id: string) => `/claims/${id}`,
-    DELETE_CLAIM: (id: string) => `/claims/${id}`,
+    UPDATE_CLAIM_BY_ID: (id: string) => `/claims/${id}`,
+    DELETE_CLAIM_BY_ID: (id: string) => `/claims/${id}`,
   },
 
   users: {

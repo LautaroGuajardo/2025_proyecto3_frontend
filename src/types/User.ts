@@ -7,11 +7,9 @@ export interface User {
   password: string;
   firstName: string;
   lastName: string;
-  active: boolean;
   role: Role;
   phone?: string;
-  fechaRegistro?: Date;
-  subArea?: Subarea;
+  subarea?: Subarea;
 };
 
 export interface UserFormData {
@@ -20,5 +18,5 @@ export interface UserFormData {
   lastName: string;
   phone?: string;
   role: Role;
-  subArea?: Subarea;
+  subarea?: Subarea;
 }

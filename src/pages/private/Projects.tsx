@@ -3,6 +3,8 @@ import { toast } from "react-toastify";
 import useAuth from "@/hooks/useAuth";
 import type { Project } from "@/types/Project";
 import { projectService } from "@/services/factories/projectServiceFactory";
+import { ProjectType as PROJECT_TYPE } from "@/types/ProjectType";
+import type { ProjectType } from "@/types/ProjectType";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -24,18 +26,20 @@ import {
 } from "@/components/ui/select";
 import FetchingSpinner from "@/components/common/FetchingSpinner";
 import EditProjectModal from "@/pages/private/components/EditProjectModal";
+import EditClaimModal from "@/pages/private/components/EditClaimModal";
 import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
 import EditButton from "@/components/common/EditButton";
 import DeleteButton from "@/components/common/DeleteButton";
 
 export default function Project() {
-  const { getAccessToken, logout, email: userEmail } = useAuth();
+  const { getAccessToken, logout } = useAuth();
   const token = getAccessToken();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [projectTypes, setProjectTypes] = useState<ProjectType[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(
     null
   );
@@ -44,41 +48,42 @@ export default function Project() {
   const [currentPage, setCurrentPage] = useState(1);
   const perPage = 10;
 
+  // Claim modal state (open with a selected project pre-filled)
+  const [claimModalOpen, setClaimModalOpen] = useState(false);
+  const [claimInitial, setClaimInitial] = useState<any | null>(null);
+
   const { getAllProjects } = projectService;
 
-  const fetchProjects = async () => {
-    if (!token) {
-      toast.error("Por favor, inicia sesión para acceder a esta sección.");
-      logout();
-      return;
-    }
-    setLoading(true);
-    // Prefer requesting projects for the logged user when email is available
-    let res;
-    if (userEmail) {
-      res = await projectService.getProjectsByUserId(token, userEmail);
-    } else {
-      res = await getAllProjects(token);
-    }
-    const { success, projects } = res as { success: boolean; projects?: Project[]; message?: string };
-    setLoading(false);
-    if (!success) {
-      toast.error("Error al cargar proyectos.");
-      return;
-    }
-    if (!projects || projects.length === 0) {
-      toast.info("No se encontraron proyectos.");
-      return;
-    }
-
-    // Filtrar solo proyectos activos
-    const activeProjects = projects.filter((p) => p.estaActivo !== false);
-    setProjects([...activeProjects]);
-  };
-
   useEffect(() => {
-    fetchProjects();
-  }, []);
+    const fetchProjects = async () => {
+      if (!token) {
+        toast.error("Por favor, inicia sesión para acceder a esta sección.");
+        logout();
+        return;
+      }
+      setLoading(true);
+      setProjectTypes(Object.values(PROJECT_TYPE) as ProjectType[]);
+
+      const res = await getAllProjects(token);
+      const { success, projects } = res as { success: boolean; projects?: Project[]; message?: string };
+      setLoading(false);
+      if (!success) {
+        toast.error("Error al cargar proyectos.");
+        return;
+      }
+      if (!projects || projects.length === 0) {
+        toast.info("No se encontraron proyectos.");
+        return;
+      }
+
+      setProjects(projects);
+    };
+
+    const timeout = setTimeout(() => {
+      fetchProjects();
+    }, 0);
+    return () => clearTimeout(timeout);
+  }, [token, logout, getAllProjects]);
 
   const handleSaveProject = async (
     project: Project,
@@ -98,6 +103,7 @@ export default function Project() {
       } = await projectService.createProject(token, {
         title: project.title,
         description: project.description,
+        projectType: project.projectType,
       });
       if (!success || !created) {
         toast.error(message || "No se pudo crear el proyecto.");
@@ -115,6 +121,7 @@ export default function Project() {
       } = await projectService.updateProjectById(token, project.id, {
         title: project.title,
         description: project.description,
+        projectType: project.projectType,
       });
       if (!success) {
         toast.error(message || "No se pudo actualizar el proyecto.");
@@ -169,7 +176,7 @@ export default function Project() {
   }, [filtered, orderBy]);
 
   // const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  useEffect(() => setCurrentPage(1), [search, orderBy]);
+  // useEffect(() => setCurrentPage(1), [search, orderBy]);
 
   const paginated = sorted.slice(
     (currentPage - 1) * perPage,
@@ -257,7 +264,7 @@ export default function Project() {
                         <TableCell>{c.title}</TableCell>
                         <TableCell>{c.description}</TableCell>
                         <TableCell>{c.projectType}</TableCell>
-                        <TableCell className="text-center space-x-2">
+                        <TableCell className="flex items-center justify-center space-x-2">
                           <EditButton
                             handleEdit={() => {
                               setSelectedProject(c);
@@ -270,6 +277,17 @@ export default function Project() {
                               setDeleteModalOpen(true);
                             }}
                           />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            title="Crear Reclamo"
+                            onClick={() => {
+                              setClaimInitial({ project: c });
+                              setClaimModalOpen(true);
+                            }}
+                          >
+                            Crear Reclamo
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
@@ -286,6 +304,14 @@ export default function Project() {
             onOpenChange={setModalOpen}
             project={selectedProject}
             saveProject={handleSaveProject}
+            projectTypes={projectTypes}
+          />
+        )}
+        {claimModalOpen && (
+          <EditClaimModal
+            open={claimModalOpen}
+            onOpenChange={setClaimModalOpen}
+            claim={claimInitial}
           />
         )}
         {deleteModalOpen && selectedProject && (

@@ -2,9 +2,11 @@ import { lazy } from "react";
 
 import {
   FolderSymlink,
-  User
+  User,
+  MessageCircleWarning
 } from "lucide-react";
 import { Role } from "./types/Role";
+import Claims from "./pages/private/Claims";
 
 export type RouteItem = {
   label: string;
@@ -41,10 +43,16 @@ export function isPublicRoute(path: string): boolean {
 export const roleBasedRoutes: Record<Role, RouteItem[]> = {
   [Role.CUSTOMER]: [
     {
-      label: "Projects",
+      label: "Projectos",
       to: "/projects",
       icon: FolderSymlink,
       element: <Projects />,
+    },
+    {
+      label: "Reclamos",
+      to: "/claims",
+      icon: MessageCircleWarning,
+      element: <Claims />,
     },
   ],
   [Role.ADMIN]: [],

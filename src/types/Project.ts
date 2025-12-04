@@ -7,6 +7,5 @@ export type Project = {
   description: string;
   registrationDate: Date;
   user: User;
-  estaActivo: boolean;
   projectType: ProjectType;
 };
