@@ -170,7 +170,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    // Si todo va bien, seteamos los datos del usuario
 
     setName(loggedUser.firstName);
     setLastname(loggedUser.lastName);

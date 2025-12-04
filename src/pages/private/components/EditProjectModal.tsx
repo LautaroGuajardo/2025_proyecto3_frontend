@@ -12,13 +12,14 @@ import { Label } from "@/components/ui/label";
 import { FolderSymlink } from "lucide-react";
 import { z } from "zod";
 import type { Project } from "@/types/Project";
-import { ProjectType } from "@/types/ProjectType";
+import type { ProjectType as ProjectTypeType } from "@/types/ProjectType";
 
 type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   project: Project | null;
   saveProject: (proj: Project, isEdit: boolean) => void;
+  projectTypes?: ProjectTypeType[];
 };
 
 export default function EditProjectModal({
@@ -26,6 +27,7 @@ export default function EditProjectModal({
   onOpenChange,
   project,
   saveProject,
+  projectTypes = [],
 }: Props) {
   const isEdit = project !== null;
   const [form, setForm] = useState({ id: "", title: "", description: "", projectType: "" });
@@ -35,11 +37,7 @@ export default function EditProjectModal({
     id: z.string().optional(),
     title: z.string().min(1, "El título es obligatorio"),
     description: z.string().optional(),
-    projectType: z.string()
-      .nonempty("El tipo de proyecto es obligatorio")
-      .refine((val) => Object.values(ProjectType).includes(val as ProjectType), {
-        message: "Tipo de proyecto inválido",
-    }),
+    projectType: z.string().nonempty("El tipo de proyecto es obligatorio"),
   });
 
   const [errors, setErrors] = useState<
@@ -52,7 +50,10 @@ export default function EditProjectModal({
         id: project.id,
         title: project.title,
         description: project.description || "",
-        projectType: project.projectType || "",
+        projectType:
+          typeof project.projectType === "string"
+            ? project.projectType
+            : project.projectType,
       });
     } else {
       setForm({ id: "", title: "", description: "", projectType: "" });
@@ -92,7 +93,28 @@ export default function EditProjectModal({
       setErrors(fieldErrors);
       return;
     }
-    saveProject(parsed.data as Project, isEdit);
+
+    const selectedId = parsed.data.projectType;
+    const selectedObj = projectTypes.find((pt) => pt === selectedId);
+
+    type ParsedData = z.infer<typeof projectSchema>;
+    type ResultData = Omit<ParsedData, "projectType"> & {
+      projectType: string | ProjectTypeType | undefined;
+      id?: string;
+    };
+
+    const resultData: ResultData = { ...parsed.data, projectType: parsed.data.projectType };
+
+    if (selectedObj) {
+      resultData.projectType = selectedObj;
+    } else {
+      if (isEdit && project && project.projectType) {
+        resultData.projectType =
+          typeof project.projectType === "string" ? project.projectType : project.projectType;
+      }
+    }
+
+    saveProject(resultData as Project, isEdit);
     onOpenChange(false);
   };
 
@@ -165,10 +187,10 @@ export default function EditProjectModal({
                 className="w-3/5 rounded border px-3 py-2 bg-transparent text-sm"
               >
                 <option value="">Seleccione un tipo</option>
-                {Object.values(ProjectType).map((pt) => (
+                {projectTypes.map((pt) => (
                   <option key={pt} value={pt}>
-                    {pt.replace(/_/g, " ")}
-                  </option>
+                    {pt}
+                </option>
                 ))}
               </select>
             </div>

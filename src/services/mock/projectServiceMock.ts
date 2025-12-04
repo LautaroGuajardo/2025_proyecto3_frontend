@@ -33,7 +33,6 @@ const PROJECTS: Project[] = [
     description: "Implementación inicial del sistema Alpha",
     registrationDate: new Date("2025-01-10T09:00:00Z"),
     user: CUSTOMER_USER,
-    estaActivo: true,
     projectType: ProjectType.TECNOLOGIA,
   },
   {
@@ -42,7 +41,6 @@ const PROJECTS: Project[] = [
     description: "Mantenimiento y mejoras para Beta",
     registrationDate: new Date("2025-02-15T10:30:00Z"),
     user: CUSTOMER_USER,
-    estaActivo: true,
     projectType: ProjectType.MANTENIMIENTO,
   },
   {
@@ -51,7 +49,6 @@ const PROJECTS: Project[] = [
     description: "Despliegue en producción de Gamma",
     registrationDate: new Date("2025-03-20T14:15:00Z"),
     user: CUSTOMER_USER,
-    estaActivo: true,
     projectType: ProjectType.PRODUCCION,
   },
   {
@@ -60,7 +57,6 @@ const PROJECTS: Project[] = [
     description: "Servicios asociados al proyecto Delta",
     registrationDate: new Date("2025-04-05T08:45:00Z"),
     user: CUSTOMER_USER,
-    estaActivo: true,
     projectType: ProjectType.SERVICIOS,
   },
   {
@@ -69,7 +65,6 @@ const PROJECTS: Project[] = [
     description: "Nadie debe saberlo",
     registrationDate: new Date("2025-04-05T08:45:00Z"),
     user: CUSTOMER_USER,
-    estaActivo: false,
     projectType: ProjectType.SERVICIOS,
   },
   {
@@ -78,7 +73,6 @@ const PROJECTS: Project[] = [
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
     user: CUSTOMER_USER_2,
-    estaActivo: true,
     projectType: ProjectType.COMERCIAL,
   },
 ];
@@ -107,7 +101,6 @@ class ProjectServiceMock implements IProjectService {
       description: project.description ?? "",
       registrationDate: project.registrationDate ?? new Date(),
       user: project.user ?? CUSTOMER_USER,
-      estaActivo: true,
       projectType: project.projectType ?? ProjectType.COMERCIAL,
     };
     PROJECTS.push(newProject);
