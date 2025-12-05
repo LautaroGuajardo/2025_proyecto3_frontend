@@ -1,4 +1,3 @@
-import type { ClaimStatus } from "./ClaimStatus";
 import type { ClaimType } from "./ClaimType";
 import type { Criticality } from "./Criticality";
 import type { Priority } from "./Priority";
@@ -10,7 +9,6 @@ export interface Claim {
   claimCode: string;
   description: string;
   claimType: ClaimType;
-  claimStatus: ClaimStatus;
   criticality: Criticality;
   priority: Priority;
   project: Project;

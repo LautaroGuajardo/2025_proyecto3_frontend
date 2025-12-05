@@ -1,12 +1,11 @@
 import type { IUserService } from "@/services/interfaces/IUserService";
 import { Role } from "@/types/Role";
-import type { User } from "@/types/User";
+import type { User, UserFormData } from "@/types/User";
 
-export type UserWithPassword = User & { password: string };
+export type UserWithPassword = UserFormData & { password: string };
 
 export const USERS: UserWithPassword[] = [
   {
-    id: "1",
     email: "admin1@example.com",
     firstName: "John",
     lastName: "Doe",
@@ -15,7 +14,6 @@ export const USERS: UserWithPassword[] = [
     password: "admin1pass",
   },
   {
-    id: "2",
     email: "customer1@example.com",
     firstName: "Jane",
     lastName: "Smith",
@@ -24,7 +22,6 @@ export const USERS: UserWithPassword[] = [
     password: "customer1pass",
   },
   {
-    id: "3",
     email: "user1@example.com",
     firstName: "Alice",
     lastName: "Johnson",
@@ -33,7 +30,6 @@ export const USERS: UserWithPassword[] = [
     password: "user1pass",
   },
   {
-    id: "4",
     email: "user2@example.com",
     firstName: "Bob",
     lastName: "Brown",
@@ -42,7 +38,6 @@ export const USERS: UserWithPassword[] = [
     password: "user2pass",
   },
   {
-    id: "5",
     email: "customer2@example.com",
     firstName: "usuario",
     lastName: "5",
@@ -55,14 +50,14 @@ export const USERS: UserWithPassword[] = [
 class UserServiceMock implements IUserService {
   updateUserProfile(
     _token: string,
-    user: Partial<User>
+    user: UserFormData
   ): Promise<{ success: boolean; message?: string; user?: User }> {
     const index = USERS.findIndex((u) => u.email === user.email);
     if (index !== -1) {
       USERS[index] = { ...USERS[index], ...user };
       return Promise.resolve({
         success: true,
-        user: USERS[index],
+        user: USERS[index] as unknown as User,
       });
     } else {
       return Promise.resolve({
@@ -73,7 +68,7 @@ class UserServiceMock implements IUserService {
   }
   async getAllUsers(
     _token: string
-  ): Promise<{ success: boolean; users?: User[]; message?: string }> {
+  ): Promise<{ success: boolean; users?: UserFormData[]; message?: string }> {
     void _token; // Evitar warning de variable no usada
     return {
       success: true,
@@ -81,10 +76,29 @@ class UserServiceMock implements IUserService {
     };
   }
 
-  async getUserByEmail(_token: string, email: string) {
+  async getUserByEmail(
+    _token: string, 
+    email: string
+  ): Promise<{ success: boolean; user?: UserFormData; message?: string }> {
     const user = USERS.find((u) => u.email === email);
     if (user) {
       return Promise.resolve({ success: true, user });
+    } else {
+      return Promise.resolve({
+        success: false,
+        message: "Usuario no encontrado (mock)",
+      });
+    }
+  }
+
+  async deleteUserByEmail(
+    _token: string,
+    email: string
+  ): Promise<{ success: boolean; message?: string }> {
+    const index = USERS.findIndex((u) => u.email === email);
+    if (index !== -1) {
+      USERS.splice(index, 1);
+      return Promise.resolve({ success: true });
     } else {
       return Promise.resolve({
         success: false,
@@ -104,7 +118,8 @@ class UserServiceMock implements IUserService {
           success: false,
           message: "Usuario no encontrado (mock)",
         });
-      return Promise.resolve({ success: true, user });
+      const userWithId: User = { id: user.email, ...user };
+      return Promise.resolve({ success: true, user: userWithId });
     } catch {
       return Promise.resolve({
         success: false,
@@ -115,10 +130,9 @@ class UserServiceMock implements IUserService {
 
   async updateUserByEmail(
     _token: string,
-    userEmail: string,
-    user: Partial<User>
-  ): Promise<{ success: boolean; user?: User; message?: string }> {
-    const index = USERS.findIndex((u) => u.email === userEmail);
+    user: Partial<UserFormData>
+  ): Promise<{ success: boolean; user?: UserFormData; message?: string }> {
+    const index = USERS.findIndex((u) => u.email === user.email);
     if (index !== -1) {
       USERS[index] = { ...USERS[index], ...user };
       return Promise.resolve({ success: true, user: USERS[index] });

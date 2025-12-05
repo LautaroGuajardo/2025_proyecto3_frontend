@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Role } from "./types/Role";
 import Claims from "./pages/private/Claims";
+const ClaimHistory = lazy(() => import("@/pages/private/ClaimHistory"));
 
 export type RouteItem = {
   label: string;
@@ -20,6 +21,7 @@ const Login = lazy(() => import("@/pages/public/Login"));
 const Register = lazy(() => import("@/pages/public/Register"));
 
 const Projects = lazy(() => import("@/pages/private/Projects"));
+const Users = lazy(() => import("@/pages/private/Users"));
 
 export const publicRoutes: RouteItem[] = [
   {
@@ -53,6 +55,19 @@ export const roleBasedRoutes: Record<Role, RouteItem[]> = {
       to: "/claims",
       icon: MessageCircleWarning,
       element: <Claims />,
+    },
+    {
+      label: "Historial Reclamo",
+      to: "/claims/:id",
+      icon: MessageCircleWarning,
+      element: <ClaimHistory />, 
+      hiddenOnSidebar: true,
+    },
+    {
+      label: "Usuarios",
+      to: "/users",
+      icon: User,
+      element: <Users />,
     },
   ],
   [Role.ADMIN]: [],

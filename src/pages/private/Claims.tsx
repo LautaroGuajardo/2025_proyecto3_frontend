@@ -18,6 +18,7 @@ import type { Claim } from "@/types/Claim";
 import EditButton from "@/components/common/EditButton";
 import FetchingSpinner from "@/components/common/FetchingSpinner";
 import useAuth from "@/hooks/useAuth";
+import { Role } from "@/types/Role";
 
 import { claimService } from "@/services/factories/claimServiceFactory";
 import { Priority } from "@/types/Priority";
@@ -26,9 +27,10 @@ import EditClaimModal from "@/pages/private/components/EditClaimModal";
 import DeleteButton from "@/components/common/DeleteButton";
 import MoreDetailsButton from "@/components/common/MoreDetailsButton";
 import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
+import { useNavigate } from "react-router-dom";
 
 export default function Claims() {
-  const { logout, getAccessToken } = useAuth();
+  const { logout, getAccessToken, role } = useAuth();
 
   const [claims, setClaims] = useState<Claim[]>([]);
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
@@ -40,6 +42,7 @@ export default function Claims() {
   const claimsPerPage = 10;
 
   const token = getAccessToken();
+  const navigate = useNavigate();
 
   const fetchClaims = async () => {
     if (!token) {
@@ -223,16 +226,19 @@ export default function Claims() {
                         <TableCell className="text-center space-x-2">
                           <MoreDetailsButton
                             handleViewDetails={() => {
-                              setSelectedClaim(claim);
-                              setModalOpen(true);
+                              if (claim && claim.id) {
+                                navigate(`/claims/${claim.id}`);
+                              }
                             }}
                           />
-                          <EditButton
-                            handleEdit={() => {
-                              setSelectedClaim(claim);
-                              setModalOpen(true);
-                            }}
-                          />
+                          {role !== Role.CUSTOMER && (
+                            <EditButton
+                              handleEdit={() => {
+                                setSelectedClaim(claim);
+                                setModalOpen(true);
+                              }}
+                            />
+                          )}
                           <DeleteButton
                             handleDelete={() => {
                               setSelectedClaim(claim);

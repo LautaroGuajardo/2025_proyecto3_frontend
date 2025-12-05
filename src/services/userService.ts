@@ -1,11 +1,11 @@
 import { apiEndpoints } from "@/api/endpoints";
-import { type User } from "@/types/User";
+import { type User, type UserFormData } from "@/types/User";
 import type { IUserService } from "@/services/interfaces/IUserService";
 
 class UserServiceReal implements IUserService {
   async getAllUsers(
     token: string
-  ): Promise<{ success: boolean; message?: string; users?: User[] }> {
+  ): Promise<{ success: boolean; message?: string; users?: UserFormData[] }> {
     try {
       const response = await fetch(apiEndpoints.users.GET_ALL, {
         method: "GET",
@@ -35,7 +35,7 @@ class UserServiceReal implements IUserService {
   async getUserByEmail(
     token: string,
     email: string
-  ): Promise<{ success: boolean; message?: string; user?: User }> {
+  ): Promise<{ success: boolean; message?: string; user?: UserFormData }> {
     try {
       const response = await fetch(
         apiEndpoints.users.GET_USER_BY_EMAIL(email),
@@ -61,6 +61,35 @@ class UserServiceReal implements IUserService {
           error instanceof Error
             ? error.message
             : "Error desconocido al obtener los usuarios",
+      };
+    }
+  }
+
+  async deleteUserByEmail(
+    token: string, 
+    email: string
+  ): Promise<{ success: boolean; message?: string; }> {
+    try {
+      const response = await fetch(
+        apiEndpoints.users.DELETE_USER_BY_EMAIL(email),
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Error al eliminar el usuario");
+      }
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Error desconocido al eliminar el usuario",
       };
     }
   }
@@ -96,12 +125,19 @@ class UserServiceReal implements IUserService {
 
   async updateUserByEmail(
     token: string,
-    userEmail: string,
-    user: Partial<User>
-  ): Promise<{ success: boolean; message?: string; user?: User }> {
+    user: Partial<UserFormData>
+  ): Promise<{ success: boolean; message?: string; user?: UserFormData }> {
     try {
+      const email = user.email;
+      if (!email) {
+        return {
+          success: false,
+          message: "El email es requerido para actualizar el usuario",
+        };
+      }
+
       const response = await fetch(
-        apiEndpoints.users.UPDATE_USER_BY_EMAIL(userEmail),
+        apiEndpoints.users.UPDATE_USER_BY_EMAIL(email),
         {
           method: "PATCH",
           headers: {
@@ -168,7 +204,7 @@ class UserServiceReal implements IUserService {
 
   async updateUserProfile(
     token: string,
-    user: Partial<User>
+    user: User
   ): Promise<{ success: boolean; message?: string; user?: User }> {
     try {
       const response = await fetch(apiEndpoints.users.UPDATE_USER_PROFILE, {

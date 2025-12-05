@@ -19,6 +19,12 @@ const registerSchema = z
     firstName: z.string().min(1, "El nombre es obligatorio."),
     lastName: z.string().min(1, "El apellido es obligatorio."),
     email: z.email("Email inválido.").min(1, "El email es obligatorio."),
+    phone: z
+      .string()
+      .optional()
+      .refine((val) => !val || /^\d{7,15}$/.test(val), {
+        message: "El teléfono debe contener solo números y tener entre 7 y 15 dígitos.",
+      }),
     password: z
       .string()
       .min(6, "La contraseña debe tener al menos 6 caracteres.")
@@ -43,6 +49,7 @@ export default function Register() {
     firstName: "",
     lastName: "",
     email: "",
+    phone: "",
     password: "",
     confirmPassword: "",
   });
@@ -154,6 +161,23 @@ export default function Register() {
               {errors.email && (
                 <p className="text-sm text-start text-red-500 mt-1">
                   {errors.email}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Label>Telefono</Label>
+              <Input
+                
+                className="mt-1"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder={"Ingresa tu teléfono"}
+              />
+              {errors.phone && (
+                <p className="text-sm text-start text-red-500 mt-1">
+                  {errors.phone}
                 </p>
               )}
             </div>

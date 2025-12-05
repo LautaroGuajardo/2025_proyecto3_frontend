@@ -48,7 +48,6 @@ export default function Project() {
   const [currentPage, setCurrentPage] = useState(1);
   const perPage = 10;
 
-  // Claim modal state (open with a selected project pre-filled)
   const [claimModalOpen, setClaimModalOpen] = useState(false);
   const [claimInitial, setClaimInitial] = useState<any | null>(null);
 
@@ -184,12 +183,10 @@ export default function Project() {
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   useEffect(() => {
-    // If filter/sort changes and current page is out of range, clamp it
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [totalPages, currentPage]);
 
   useEffect(() => {
-    // when ordering changes, go back to first page
     setCurrentPage(1);
   }, [orderBy]);
 

@@ -5,8 +5,6 @@ import { Role } from "@/types/Role";
 import { USERS, type UserWithPassword } from "./userServiceMock";
 import { tokenServiceMock } from "./tokenServiceMock";
 
-// Secret para firmar tokens (solo mock). Puedes cambiarlo si quieres.
-
 class AuthServiceMock implements IAuthService {
   async login(data: LoginFormDto): Promise<LoginResponseDto> {
     const user = USERS.find(
@@ -16,12 +14,6 @@ class AuthServiceMock implements IAuthService {
       return Promise.resolve({
         success: false,
         message: "Credenciales inválidas",
-      });
-    }
-    if (!user.active) {
-      return Promise.resolve({
-        success: false,
-        message: "Cuenta inactiva. Revisa tu email para activarla",
       });
     }
 
@@ -44,15 +36,12 @@ class AuthServiceMock implements IAuthService {
     }
 
     const newUser: UserWithPassword = {
+      id: (USERS.length + 1).toString(),
       email: data.email,
       firstName: data.firstName,
       lastName: data.lastName,
-      active: true,
       role: Role.USER,
-      phone: "",
-      address: "",
-      city: "",
-      province: "",
+      phone: data.phone,
       password: data.password,
     };
 
@@ -65,6 +54,7 @@ class AuthServiceMock implements IAuthService {
   }
 
   async logout(_token: string) {
+    void _token; // Evitar warning de variable no usada
     return Promise.resolve({
       success: true,
     });

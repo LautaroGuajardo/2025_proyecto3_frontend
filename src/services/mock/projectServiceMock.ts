@@ -8,7 +8,6 @@ const CUSTOMER_USER = {
   email: "customer1@example.com",
   firstName: "Jane",
   lastName: "Smith",
-  active: true,
   role: Role.CUSTOMER,
   phone: "5559876543",
   password: "customer1pass",

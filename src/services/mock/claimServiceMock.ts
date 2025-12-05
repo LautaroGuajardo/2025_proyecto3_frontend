@@ -1,14 +1,13 @@
 import type { Claim } from "@/types/Claim";
 import type { IClaimService } from "@/services/interfaces/IClaimService";
 import { Role } from "@/types/Role";
-import { ClaimStatus } from "@/types/ClaimStatus";
 import { Criticality } from "@/types/Criticality";
 import { ClaimType } from "@/types/ClaimType";
 import { Priority } from "@/types/Priority";
 import { ProjectType } from "@/types/ProjectType";
 import { SUBAREA } from "./subareaServiceMock";
 
-const CUSTOMER_USER = {
+const CUSTOMER = {
   id: "2",
   email: "customer1@example.com",
   firstName: "Jane",
@@ -24,7 +23,7 @@ const SAMPLE_PROJECT = {
   title: "Proyecto Alpha",
   description: "Proyecto de ejemplo para reclamos",
   registrationDate: new Date("2025-01-10T09:00:00Z"),
-  user: CUSTOMER_USER,
+  user: CUSTOMER,
   projectType: ProjectType.TECNOLOGIA,
 };
 
@@ -34,7 +33,6 @@ const CLAIMS: Claim[] = [
   	claimCode: "RC-0001",
   	description: "Falla en autenticación",
   	claimType: ClaimType.TECNICO,
-  	claimStatus: ClaimStatus.PENDIENTE,
   	criticality: Criticality.ALTA,
   	priority: Priority.URGENTE,
   	project: SAMPLE_PROJECT,
@@ -45,7 +43,6 @@ const CLAIMS: Claim[] = [
   	claimCode: "RC-0002",
   	description: "Problema de facturación en el módulo X",
   	claimType: ClaimType.FACTURACION,
-  	claimStatus: ClaimStatus.PROGRESO,
   	criticality: Criticality.MEDIA,
   	priority: Priority.ALTA,
   	project: SAMPLE_PROJECT,
@@ -56,7 +53,6 @@ const CLAIMS: Claim[] = [
   	claimCode: "RC-0003",
   	description: "Problema de facturación en el módulo X",
   	claimType: ClaimType.FACTURACION,
-  	claimStatus: ClaimStatus.PROGRESO,
   	criticality: Criticality.MEDIA,
   	priority: Priority.ALTA,
   	project: SAMPLE_PROJECT,
@@ -67,7 +63,6 @@ const CLAIMS: Claim[] = [
   	claimCode: "RC-0004",
   	description: "Problema de facturación en el módulo X",
   	claimType: ClaimType.FACTURACION,
-  	claimStatus: ClaimStatus.PROGRESO,
   	criticality: Criticality.MEDIA,
   	priority: Priority.ALTA,
   	project: SAMPLE_PROJECT,
@@ -78,7 +73,6 @@ const CLAIMS: Claim[] = [
   	claimCode: "RC-0005",
   	description: "Problema de facturación en el módulo X",
   	claimType: ClaimType.FACTURACION,
-  	claimStatus: ClaimStatus.PROGRESO,
   	criticality: Criticality.MEDIA,
   	priority: Priority.ALTA,
   	project: SAMPLE_PROJECT,
@@ -89,7 +83,6 @@ const CLAIMS: Claim[] = [
   	claimCode: "RC-0006",
   	description: "Problema de facturación en el módulo X",
   	claimType: ClaimType.FACTURACION,
-  	claimStatus: ClaimStatus.PROGRESO,
   	criticality: Criticality.MEDIA,
   	priority: Priority.ALTA,
   	project: SAMPLE_PROJECT,
@@ -100,7 +93,6 @@ const CLAIMS: Claim[] = [
   	claimCode: "RC-0007",
   	description: "Problema de facturación en el módulo X",
   	claimType: ClaimType.FACTURACION,
-  	claimStatus: ClaimStatus.PROGRESO,
   	criticality: Criticality.MEDIA,
   	priority: Priority.ALTA,
   	project: SAMPLE_PROJECT,
@@ -111,7 +103,6 @@ const CLAIMS: Claim[] = [
   	claimCode: "RC-0008",
   	description: "Problema de facturación en el módulo X",
   	claimType: ClaimType.FACTURACION,
-  	claimStatus: ClaimStatus.PROGRESO,
   	criticality: Criticality.MEDIA,
   	priority: Priority.ALTA,
   	project: SAMPLE_PROJECT,
@@ -122,7 +113,6 @@ const CLAIMS: Claim[] = [
   	claimCode: "RC-0009",
   	description: "Problema de facturación en el módulo X",
   	claimType: ClaimType.FACTURACION,
-  	claimStatus: ClaimStatus.PROGRESO,
   	criticality: Criticality.MEDIA,
   	priority: Priority.ALTA,
   	project: SAMPLE_PROJECT,
@@ -133,7 +123,6 @@ const CLAIMS: Claim[] = [
   	claimCode: "RC-0010",
   	description: "Problema de facturación en el módulo X",
   	claimType: ClaimType.FACTURACION,
-  	claimStatus: ClaimStatus.PROGRESO,
   	criticality: Criticality.MEDIA,
   	priority: Priority.ALTA,
   	project: SAMPLE_PROJECT,
@@ -144,7 +133,6 @@ const CLAIMS: Claim[] = [
   	claimCode: "RC-0011",
   	description: "Problema de facturación en el módulo X",
   	claimType: ClaimType.FACTURACION,
-  	claimStatus: ClaimStatus.PROGRESO,
   	criticality: Criticality.MEDIA,
   	priority: Priority.ALTA,
   	project: SAMPLE_PROJECT,
@@ -168,12 +156,12 @@ class ClaimServiceMock implements IClaimService {
   	  claimCode: claim.claimCode ?? `RC-00${CLAIMS.length + 1}`,
   	  description: claim.description ?? "",
   	  claimType: claim.claimType ?? ClaimType.OTRO,
-  	  claimStatus: ClaimStatus.PENDIENTE,
   	  criticality: claim.criticality ?? Criticality.BAJA,
   	  priority: claim.priority ?? Priority.BAJA,
   	  project: claim.project ?? SAMPLE_PROJECT,
-  	  subarea: claim.subarea ?? SUBAREA.ADMINISTRACION,
+  	  subarea: claim.subarea ?? undefined,
   	};
+	console.log("Mock createClaim:", newClaim);
   	CLAIMS.push(newClaim);
   	return { success: true, claim: newClaim };
   }  
@@ -191,4 +179,5 @@ class ClaimServiceMock implements IClaimService {
   }
 }
 
+export { CLAIMS };
 export const claimServiceMock = new ClaimServiceMock();

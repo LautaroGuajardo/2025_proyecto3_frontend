@@ -2,11 +2,6 @@ export const API_ENDPOINTS = {
   auth: {
     LOGIN: "/auth/login",
     REGISTER: "/auth/register",
-    FORGOT_PASSWORD: "/auth/forgot-password",
-    RESET_PASSWORD: (email: string, tokenPass: string) =>
-      `/auth/reset-password?email=${encodeURIComponent(
-        email
-      )}&tokenPass=${encodeURIComponent(tokenPass)}`,
     LOGOUT: "/auth/logout",
     VERIFY_ACCOUNT: "/auth/verify-account",
     RESEND_VERIFICATION: "/auth/resend-verification",
@@ -14,7 +9,6 @@ export const API_ENDPOINTS = {
     REGENERATE_OTP: (email: string) =>
       `/auth/regenerate-otp?email=${encodeURIComponent(email)}`,
     VALIDATE_TOKEN: "/auth/validate-token",
-    CHANGE_PASSWORD: "/auth/change-password",
   },
 
   projects: {
@@ -24,26 +18,6 @@ export const API_ENDPOINTS = {
     CREATE_PROJECT: "/projects",
     UPDATE_PROJECT: (id: string) => `/projects/${id}`,
     DELETE_PROJECT: (id: string) => `/projects/${id}`,
-  },
-
-  projectTypes: {
-    GET_ALL: "/project-types",
-  },
-
-  claimStates: {
-    GET_ALL: "/claim-states",
-  },
-
-  claimTypes: {
-    GET_ALL: "/claim-types",
-  },
-
-  criticalities: {
-    GET_ALL: "/criticalities",
-  },
-
-  priorities: {
-    GET_ALL: "/priorities",
   },
 
   areas: {
