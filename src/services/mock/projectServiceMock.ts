@@ -75,6 +75,54 @@ const PROJECTS: Project[] = [
     user: CUSTOMER_USER_2,
     projectType: ProjectType.COMERCIAL,
   },
+  {
+    id: "7",
+    title: "Proyecto Epsilon",
+    description: "Nuevo proyecto para el cliente 2",
+    registrationDate: new Date("2025-05-12T11:20:00Z"),
+    user: CUSTOMER_USER_2,
+    projectType: ProjectType.COMERCIAL,
+  },
+  {
+    id: "8",
+    title: "Proyecto Epsilon",
+    description: "Nuevo proyecto para el cliente 2",
+    registrationDate: new Date("2025-05-12T11:20:00Z"),
+    user: CUSTOMER_USER_2,
+    projectType: ProjectType.COMERCIAL,
+  },
+  {
+    id: "9",
+    title: "Proyecto Epsilon",
+    description: "Nuevo proyecto para el cliente 2",
+    registrationDate: new Date("2025-05-12T11:20:00Z"),
+    user: CUSTOMER_USER_2,
+    projectType: ProjectType.COMERCIAL,
+  },
+  {
+    id: "10",
+    title: "Proyecto Epsilon",
+    description: "Nuevo proyecto para el cliente 2",
+    registrationDate: new Date("2025-05-12T11:20:00Z"),
+    user: CUSTOMER_USER_2,
+    projectType: ProjectType.COMERCIAL,
+  },
+  {
+    id: "11",
+    title: "Proyecto Epsilon",
+    description: "Nuevo proyecto para el cliente 2",
+    registrationDate: new Date("2025-05-12T11:20:00Z"),
+    user: CUSTOMER_USER_2,
+    projectType: ProjectType.COMERCIAL,
+  },
+  {
+    id: "12",
+    title: "Proyecto Epsilon",
+    description: "Nuevo proyecto para el cliente 2",
+    registrationDate: new Date("2025-05-12T11:20:00Z"),
+    user: CUSTOMER_USER_2,
+    projectType: ProjectType.COMERCIAL,
+  },
 ];
 
 class ProjectServiceMock implements IProjectService {
@@ -96,7 +144,7 @@ class ProjectServiceMock implements IProjectService {
 
   async createProject(_token: string, project: Partial<Project>) {
     const newProject: Project = {
-      id: "7",
+      id: "20",
       title: project.title ?? "Nuevo Proyecto",
       description: project.description ?? "",
       registrationDate: project.registrationDate ?? new Date(),
