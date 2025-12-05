@@ -1,21 +1,24 @@
-import type { User } from "@/types/User";
+import type { User, UserFormData } from "@/types/User";
 
 export interface IUserService {
   getAllUsers(
     token: string
-  ): Promise<{ success: boolean; message?: string; users?: User[] }>;
+  ): Promise<{ success: boolean; message?: string; users?: UserFormData[] }>;
   getUserByEmail(
     token: string,
     email: string
-  ): Promise<{ success: boolean; message?: string; user?: User }>;
+  ): Promise<{ success: boolean; message?: string; user?: UserFormData }>;
   getUserProfile(
     token: string
   ): Promise<{ success: boolean; message?: string; user?: User }>;
   updateUserByEmail(
     token: string,
-    userEmail: string,
-    user: Partial<User>
-  ): Promise<{ success: boolean; message?: string; user?: User }>;
+    user: Partial<UserFormData>
+  ): Promise<{ success: boolean; message?: string; user?: UserFormData }>;
+  deleteUserByEmail(
+    token: string,
+    email: string
+  ): Promise<{ success: boolean; message?: string }>;
   changePassword(
     token: string,
     email: string,

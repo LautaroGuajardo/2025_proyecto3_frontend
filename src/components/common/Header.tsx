@@ -62,14 +62,6 @@ export default function Header({
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="bg-white text-black">
-          <DropdownMenuItem
-            onClick={() => navigate("/profile")}
-            className="cursor-pointer"
-          >
-            <User className="w-4 h-4 mr-2" />
-            {"Mi perfil"}
-          </DropdownMenuItem>
-
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={logout} className="cursor-pointer">
             <LogOut className="w-4 h-4 mr-2" />
