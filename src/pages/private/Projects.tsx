@@ -175,13 +175,23 @@ export default function Project() {
     }
   }, [filtered, orderBy]);
 
-  // const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  // useEffect(() => setCurrentPage(1), [search, orderBy]);
-
   const paginated = sorted.slice(
     (currentPage - 1) * perPage,
     currentPage * perPage
   );
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / perPage));
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+
+  useEffect(() => {
+    // If filter/sort changes and current page is out of range, clamp it
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [totalPages, currentPage]);
+
+  useEffect(() => {
+    // when ordering changes, go back to first page
+    setCurrentPage(1);
+  }, [orderBy]);
 
   return (
     <>
@@ -296,6 +306,41 @@ export default function Project() {
               </Table>
             </div>
           </CardContent>
+        
+          <div className="flex justify-end pr-25">
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center space-x-2 mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Anterior
+                </Button>
+
+                {pages.map((page) => (
+                  <Button
+                    key={page}
+                    size="sm"
+                    variant={page === currentPage ? "default" : "outline"}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </Button>
+                ))}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Siguiente
+                </Button>
+              </div>
+            )}
+          </div>
         </Card>
 
         {modalOpen && (

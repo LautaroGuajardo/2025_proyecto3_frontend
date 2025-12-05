@@ -118,7 +118,9 @@ export default function Claims() {
     });
   }, [claims, search]);
 
-  const totalPages = Math.ceil(filtered.length / claimsPerPage) || 1;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / claimsPerPage));
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+
   useEffect(() => setCurrentPage(1), [search]);
   const paginated = useMemo(
     () =>
@@ -244,32 +246,41 @@ export default function Claims() {
                 </TableBody>
               </Table>
             </div>
-            <div className="flex items-center justify-between pt-4">
-              <span className="text-sm text-muted-foreground">
-                Página {currentPage} de {totalPages || 1}
-              </span>
-              <div className="space-x-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Anterior
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    setCurrentPage((p) => (p < totalPages ? p + 1 : totalPages))
-                  }
-                  disabled={currentPage === totalPages || totalPages === 0}
-                >
-                  Siguiente
-                </Button>
-              </div>
-            </div>
           </CardContent>
+            <div className="flex justify-end pr-25">
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center space-x-2 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Anterior
+                  </Button>
+
+                  {pages.map((page) => (
+                    <Button
+                      key={page}
+                      size="sm"
+                      variant={page === currentPage ? "default" : "outline"}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Siguiente
+                  </Button>
+                </div>
+              )}
+            </div>
         </Card>
       </div>
 
