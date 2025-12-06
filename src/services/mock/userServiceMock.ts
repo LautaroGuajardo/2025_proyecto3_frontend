@@ -2,9 +2,7 @@ import type { IUserService } from "@/services/interfaces/IUserService";
 import { Role } from "@/types/Role";
 import type { User, UserFormData } from "@/types/User";
 
-export type UserWithPassword = UserFormData & { password: string };
-
-export const USERS: UserWithPassword[] = [
+export const USERS = [
   {
     email: "admin1@example.com",
     firstName: "John",

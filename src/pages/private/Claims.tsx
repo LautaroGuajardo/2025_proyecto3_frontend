@@ -11,6 +11,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -19,14 +26,13 @@ import EditButton from "@/components/common/EditButton";
 import FetchingSpinner from "@/components/common/FetchingSpinner";
 import useAuth from "@/hooks/useAuth";
 import { Role } from "@/types/Role";
+import { ClaimStatus } from "@/types/ClaimStatus";
 
 import { claimService } from "@/services/factories/claimServiceFactory";
 import { Priority } from "@/types/Priority";
 
 import EditClaimModal from "@/pages/private/components/EditClaimModal";
-import DeleteButton from "@/components/common/DeleteButton";
 import MoreDetailsButton from "@/components/common/MoreDetailsButton";
-import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
 import { useNavigate } from "react-router-dom";
 
 export default function Claims() {
@@ -35,14 +41,15 @@ export default function Claims() {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const claimsPerPage = 10;
 
   const token = getAccessToken();
   const navigate = useNavigate();
+  const isCustomer = role === Role.CUSTOMER;
 
   const fetchClaims = async () => {
     if (!token) {
@@ -92,37 +99,28 @@ export default function Claims() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleDeleteClaim = async (id: string) => {
-    if (!token) {
-      toast.error("Por favor, inicia sesión para realizar esta acción.");
-      logout();
-      return;
-    }
-
-    const { success } = await claimService.deleteClaimById(token, id);
-    if (!success) {
-      toast.error("Error al eliminar el reclamo. Intenta nuevamente.");
-      return;
-    }
-    setClaims((prev) => prev.filter((c) => c.id !== id));
-    toast.success("Reclamo eliminado correctamente.");
-  };
-
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return claims.filter((c) => {
+      // apply status filter first
+      if (statusFilter !== "all") {
+        const statusLabel = String(getLabel(c.claimStatus)).toLowerCase();
+        if (statusLabel !== String(statusFilter).toLowerCase()) return false;
+      }
+
       if (!q) return true;
       return (
         (c.claimCode || "").toLowerCase().includes(q) ||
         (c.description || "").toLowerCase().includes(q) ||
         (c.claimType || "").toLowerCase().includes(q) ||
-        (c.subarea?.name || "").toLowerCase().includes(q)
+        (c.area || "").toLowerCase().includes(q)
       );
     });
-  }, [claims, search]);
+  }, [claims, search, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / claimsPerPage));
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const visibleCols = isCustomer ? 7 : 8;
 
   useEffect(() => setCurrentPage(1), [search]);
   const paginated = useMemo(
@@ -141,7 +139,7 @@ export default function Claims() {
             <div className="flex flex-col md:flex-row gap-4 items-center">
               <div className="text-start">
                 <h3 className="text-2xl font-semibold">Todos los reclamos</h3>
-                <p className="text-md text-green-500">Reclamos activos ({claims.length})</p>
+                <p className="text-md text-green-500">Reclamos: {claims.length}</p>
               </div>
               <div className="relative w-full max-w-60 md:w-1/3 ml-auto bg-gray-50">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -156,14 +154,18 @@ export default function Claims() {
                 />
               </div>
               <div className="w-full md:w-auto">
-                <Button
-                  onClick={() => {
-                    setSelectedClaim(null);
-                    setModalOpen(true);
-                  }}
-                >
-                  Agregar reclamo
-                </Button>
+                <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-50 bg-gray-50 border-none font-semibold">
+                    <span className="font-normal">Estado</span>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {Object.values(ClaimStatus).map((s) => (
+                      <SelectItem key={String(s)} value={String(s)}>{String(s)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardContent>
@@ -179,20 +181,21 @@ export default function Claims() {
                     <TableHead className="text-gray-400">Criticidad</TableHead>
                     <TableHead className="text-gray-400">Prioridad</TableHead>
                     <TableHead className="text-gray-400">Estado</TableHead>
-                    <TableHead className="text-gray-400">Subárea</TableHead>
+                    {!isCustomer && <TableHead className="text-gray-400">Subarea</TableHead>}
+                    <TableHead className="text-gray-400">Area</TableHead>
                     <TableHead className="text-gray-400 text-center">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="text-start">
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-6">
+                      <TableCell colSpan={visibleCols} className="text-center py-6">
                         <FetchingSpinner />
                       </TableCell>
                     </TableRow>
                   ) : paginated.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-6">
+                      <TableCell colSpan={visibleCols} className="text-center py-6">
                         No hay resultados
                       </TableCell>
                     </TableRow>
@@ -222,7 +225,8 @@ export default function Claims() {
                           </span>
                         </TableCell>
                         <TableCell>{getLabel(claim.claimStatus)}</TableCell>
-                        <TableCell>{claim.subarea?.name}</TableCell>
+                        {!isCustomer && <TableCell>{claim.subarea ?? "-"}</TableCell>}
+                        <TableCell>{claim.area}</TableCell>
                         <TableCell className="text-center space-x-2">
                           <MoreDetailsButton
                             handleViewDetails={() => {
@@ -239,12 +243,6 @@ export default function Claims() {
                               }}
                             />
                           )}
-                          <DeleteButton
-                            handleDelete={() => {
-                              setSelectedClaim(claim);
-                              setDeleteModalOpen(true);
-                            }}
-                          />
                         </TableCell>
                       </TableRow>
                     ))
@@ -297,22 +295,6 @@ export default function Claims() {
           claim={selectedClaim}
           onSaved={async () => {
             void fetchClaims();
-          }}
-        />
-      )}
-      {deleteModalOpen && selectedClaim && (
-        <ConfirmDeleteModal
-          isOpen={deleteModalOpen}
-          onClose={() => {
-            setDeleteModalOpen(false);
-            setSelectedClaim(null);
-          }}
-          onConfirm={async () => {
-            if (selectedClaim && selectedClaim.id) {
-              await handleDeleteClaim(selectedClaim.id);
-            }
-            setDeleteModalOpen(false);
-            setSelectedClaim(null);
           }}
         />
       )}

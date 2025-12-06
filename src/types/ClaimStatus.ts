@@ -2,7 +2,6 @@ export const ClaimStatus = {
   PENDIENTE: "PENDIENTE",
   PROGRESO: "PROGRESO",
   RESUELTO: "RESUELTO",
-  CERRADO: "CERRADO",
 } as const;
 
 export type ClaimStatus = (typeof ClaimStatus)[keyof typeof ClaimStatus];

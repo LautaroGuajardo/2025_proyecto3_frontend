@@ -4,8 +4,6 @@ import { ClaimStatus } from "@/types/ClaimStatus";
 import { CLAIMS } from "./claimServiceMock"
 import { USERS } from "./userServiceMock";
 
-
-
 const CLAIM_HISTORY: ClaimHistory[] = [
   {
     id: "1",

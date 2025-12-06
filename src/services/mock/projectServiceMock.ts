@@ -1,37 +1,15 @@
 import type { IProjectService } from "@/services/interfaces/IProjectService";
 import type { Project } from "@/types/Project";
 import { ProjectType } from "@/types/ProjectType";
-import { Role } from "@/types/Role";
+import { USERS } from "./userServiceMock";
 
-const CUSTOMER_USER = {
-  id: "2",
-  email: "customer1@example.com",
-  firstName: "Jane",
-  lastName: "Smith",
-  role: Role.CUSTOMER,
-  phone: "5559876543",
-  password: "customer1pass",
-};
-
-const CUSTOMER_USER_2 = {
-  id: "5",
-  email: "customer2@example.com",
-  firstName: "usuario",
-  lastName: "5",
-  active: true,
-  role: Role.CUSTOMER,
-  phone: "5559876543",
-  password: "customer2pass",
-};
-
-
-const PROJECTS: Project[] = [
+export const PROJECTS: Project[] = [
   {
     id: "1",
     title: "Proyecto Alpha",
     description: "Implementación inicial del sistema Alpha",
     registrationDate: new Date("2025-01-10T09:00:00Z"),
-    user: CUSTOMER_USER,
+    user: USERS[1],
     projectType: ProjectType.TECNOLOGIA,
   },
   {
@@ -39,7 +17,7 @@ const PROJECTS: Project[] = [
     title: "Proyecto Beta",
     description: "Mantenimiento y mejoras para Beta",
     registrationDate: new Date("2025-02-15T10:30:00Z"),
-    user: CUSTOMER_USER,
+    user: USERS[1],
     projectType: ProjectType.MANTENIMIENTO,
   },
   {
@@ -47,7 +25,7 @@ const PROJECTS: Project[] = [
     title: "Proyecto Gamma",
     description: "Despliegue en producción de Gamma",
     registrationDate: new Date("2025-03-20T14:15:00Z"),
-    user: CUSTOMER_USER,
+    user: USERS[1],
     projectType: ProjectType.PRODUCCION,
   },
   {
@@ -55,7 +33,7 @@ const PROJECTS: Project[] = [
     title: "Proyecto Delta",
     description: "Servicios asociados al proyecto Delta",
     registrationDate: new Date("2025-04-05T08:45:00Z"),
-    user: CUSTOMER_USER,
+    user: USERS[1],
     projectType: ProjectType.SERVICIOS,
   },
   {
@@ -63,7 +41,7 @@ const PROJECTS: Project[] = [
     title: "Proyecto Escondido",
     description: "Nadie debe saberlo",
     registrationDate: new Date("2025-04-05T08:45:00Z"),
-    user: CUSTOMER_USER,
+    user: USERS[1],
     projectType: ProjectType.SERVICIOS,
   },
   {
@@ -71,7 +49,7 @@ const PROJECTS: Project[] = [
     title: "Proyecto Epsilon",
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
-    user: CUSTOMER_USER_2,
+    user: USERS[1],
     projectType: ProjectType.COMERCIAL,
   },
   {
@@ -79,7 +57,7 @@ const PROJECTS: Project[] = [
     title: "Proyecto Epsilon",
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
-    user: CUSTOMER_USER_2,
+    user: USERS[1],
     projectType: ProjectType.COMERCIAL,
   },
   {
@@ -87,7 +65,7 @@ const PROJECTS: Project[] = [
     title: "Proyecto Epsilon",
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
-    user: CUSTOMER_USER_2,
+    user: USERS[1],
     projectType: ProjectType.COMERCIAL,
   },
   {
@@ -95,7 +73,7 @@ const PROJECTS: Project[] = [
     title: "Proyecto Epsilon",
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
-    user: CUSTOMER_USER_2,
+    user: USERS[1],
     projectType: ProjectType.COMERCIAL,
   },
   {
@@ -103,7 +81,7 @@ const PROJECTS: Project[] = [
     title: "Proyecto Epsilon",
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
-    user: CUSTOMER_USER_2,
+    user: USERS[1],
     projectType: ProjectType.COMERCIAL,
   },
   {
@@ -111,7 +89,7 @@ const PROJECTS: Project[] = [
     title: "Proyecto Epsilon",
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
-    user: CUSTOMER_USER_2,
+    user: USERS[1],
     projectType: ProjectType.COMERCIAL,
   },
   {
@@ -119,7 +97,7 @@ const PROJECTS: Project[] = [
     title: "Proyecto Epsilon",
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
-    user: CUSTOMER_USER_2,
+    user: USERS[1],
     projectType: ProjectType.COMERCIAL,
   },
 ];
@@ -147,7 +125,7 @@ class ProjectServiceMock implements IProjectService {
       title: project.title ?? "Nuevo Proyecto",
       description: project.description ?? "",
       registrationDate: project.registrationDate ?? new Date(),
-      user: project.user ?? CUSTOMER_USER,
+      user: project.user ?? USERS[1],
       projectType: project.projectType ?? ProjectType.COMERCIAL,
     };
     PROJECTS.push(newProject);

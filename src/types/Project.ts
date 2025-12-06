@@ -1,11 +1,11 @@
 import type { ProjectType } from "./ProjectType";
-import type { User } from "./User";
+import type { UserFormData } from "./User";
 
 export type Project = {
   id: string;
   title: string;
   description: string;
   registrationDate: Date;
-  user: User;
+  user: UserFormData;
   projectType: ProjectType;
 };

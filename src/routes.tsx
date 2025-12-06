@@ -70,8 +70,57 @@ export const roleBasedRoutes: Record<Role, RouteItem[]> = {
       element: <Users />,
     },
   ],
-  [Role.ADMIN]: [],
-  [Role.USER]: [],  
+  [Role.ADMIN]: [
+    {
+      label: "Reclamos",
+      to: "/claims",
+      icon: MessageCircleWarning,
+      element: <Claims />,
+    },
+    {
+      label: "Historial Reclamo",
+      to: "/claims/:id",
+      icon: MessageCircleWarning,
+      element: <ClaimHistory />, 
+      hiddenOnSidebar: true,
+    },
+    {
+      label: "Usuarios",
+      to: "/users",
+      icon: User,
+      element: <Users />,
+    },
+  ],
+  [Role.AUDITOR]: [
+    {
+      label: "Reclamos",
+      to: "/claims",
+      icon: MessageCircleWarning,
+      element: <Claims />,
+    },
+    {
+      label: "Historial Reclamo",
+      to: "/claims/:id",
+      icon: MessageCircleWarning,
+      element: <ClaimHistory />, 
+      hiddenOnSidebar: true,
+    },
+  ],
+  [Role.USER]: [
+    {
+      label: "Reclamos",
+      to: "/claims",
+      icon: MessageCircleWarning,
+      element: <Claims />,
+    },
+    {
+      label: "Historial Reclamo",
+      to: "/claims/:id",
+      icon: MessageCircleWarning,
+      element: <ClaimHistory />, 
+      hiddenOnSidebar: true,
+    },
+  ],  
 }
 
 export function getSidebarRoutesForRole(role: Role): RouteItem[] {

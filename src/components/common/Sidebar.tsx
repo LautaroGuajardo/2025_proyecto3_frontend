@@ -24,7 +24,7 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
             <img
               src={isOpen ? "/logo/InvoIQLogo.png" : "/logo/InvoIQLogo.png"}
               alt="Logo"
-              className={`${isOpen ? "w-32" : "h-full mb-4"}`}
+              className={`${isOpen ? "w-32" : "h-full object-contain mb-4"}`}
             />
           </Link>
         </div>

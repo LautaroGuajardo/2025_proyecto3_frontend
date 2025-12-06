@@ -1,4 +1,3 @@
-import type { Subarea } from "./Subarea";
 import { Role } from "./Role";
 
 export interface User {
@@ -9,7 +8,7 @@ export interface User {
   lastName: string;
   role: Role;
   phone?: string;
-  subarea?: Subarea;
+  subarea?: string;
 };
 
 export interface UserFormData {
@@ -18,5 +17,5 @@ export interface UserFormData {
   lastName: string;
   phone?: string;
   role: Role;
-  subarea?: Subarea;
+  subarea?: string;
 }
