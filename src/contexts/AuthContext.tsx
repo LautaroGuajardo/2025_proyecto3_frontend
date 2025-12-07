@@ -7,6 +7,8 @@ interface AuthContextProps {
   lastname: string;
   email: string;
   role: string;
+  area?: string;
+  subarea?: string;
   isLoggedIn: boolean;
   authLoading: boolean;
   setName: (name: string) => void;

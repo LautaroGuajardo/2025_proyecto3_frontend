@@ -42,6 +42,8 @@ class AuthServiceMock implements IAuthService {
       lastName: data.lastName,
       role: Role.USER,
       phone: data.phone,
+      area: data.area || null,
+      subarea: data.subarea || null,
       password: data.password,
     };
 

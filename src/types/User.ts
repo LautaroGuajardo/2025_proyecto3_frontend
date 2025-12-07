@@ -9,6 +9,7 @@ export interface User {
   role: Role;
   phone?: string;
   subarea?: string;
+  area?: string;
 };
 
 export interface UserFormData {
@@ -18,4 +19,5 @@ export interface UserFormData {
   phone?: string;
   role: Role;
   subarea?: string;
+  area?: string;
 }

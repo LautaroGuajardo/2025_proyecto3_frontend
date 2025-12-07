@@ -77,13 +77,10 @@ export default function Users() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Cada vez que queramos filtrar volvemos a la página 1
-  // para evitar que el usuario se quede en una página que no tiene resultados
   useEffect(() => {
     setCurrentPage(1);
   }, [search, orderBy]);
 
-  // Filtro de usuarios por nombre, apellido, correo electrónico y teléfono
   const filteredUsers = users.filter((user) => {
     const q = search.toLowerCase().trim();
     if (!q) return true;
@@ -103,7 +100,7 @@ export default function Users() {
     );
   });
 
-  // Ordenar por: nombre/apellido/correo electrónico de A-Z, teléfono ASC, latest = as-is
+  
   const sortedUsers = [...filteredUsers].sort((a, b) => {
     switch (orderBy) {
       case "name":
@@ -129,9 +126,7 @@ export default function Users() {
       );
       toast.success("Usuario actualizado correctamente");
     } else {
-      // setUsers((prevUsers) => [...prevUsers, user]);
       fetchUsers(); // Refrescar la lista de usuarios
-      toast.success("Usuario agregado correctamente");
     }
   };
 
@@ -150,7 +145,6 @@ export default function Users() {
         return;
       }
 
-      // Remove user from list (simulate delete) or you could just mark inactive
       setUsers((prev) => prev.filter((u) => u.email !== user.email));
       toast.success("Usuario eliminado correctamente.");
     } catch {
@@ -212,6 +206,16 @@ export default function Users() {
                   <SelectItem value="phone">Teléfono</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="w-full md:w-auto">
+                <Button
+                  onClick={() => {
+                    setSelectedUser(null);
+                    setModalOpen(true);
+                  }}
+                >
+                  Agregar Usuario
+                </Button>
+              </div>
             </div>
           </CardContent>
 
@@ -222,9 +226,10 @@ export default function Users() {
                   <TableRow>
                     <TableHead className="text-gray-400">Nombre</TableHead>
                     <TableHead className="text-gray-400">Apellido</TableHead>
-                    <TableHead className="text-gray-400">
-                      Correo electrónico
-                    </TableHead>
+                    <TableHead className="text-gray-400">Rol</TableHead>
+                    <TableHead className="text-gray-400">Subárea</TableHead>
+                    <TableHead className="text-gray-400">Area</TableHead>
+                    <TableHead className="text-gray-400">Correo electrónico</TableHead>
                     <TableHead className="text-gray-400">Telefono</TableHead>
                     <TableHead className="text-center text-gray-400">
                       Acciones
@@ -263,12 +268,19 @@ export default function Users() {
                             ? user.lastName.slice(0, 50)
                             : user.lastName}
                         </TableCell>
+                        <TableCell>{user.role}</TableCell>
+                        <TableCell>
+                          {user.subarea ?? "---"}
+                        </TableCell>
+                        <TableCell>
+                          {user.area ?? "---"}
+                        </TableCell>
                         <TableCell>
                           {user.email.length > 50
                             ? user.email.slice(0, 50)
                             : user.email}
                         </TableCell>
-                        <TableCell>{user.phone}</TableCell>
+                        <TableCell>{user.phone ?? "---"}</TableCell>
                         <TableCell className="text-center space-x-2">
                           <MoreDetailsButton
                             handleViewDetails={() => {

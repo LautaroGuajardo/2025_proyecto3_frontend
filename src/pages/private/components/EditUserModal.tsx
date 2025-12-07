@@ -19,13 +19,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { z } from "zod";
 
 import { userService } from "@/services/factories/userServiceFactory";
+import { authService } from "@/services/factories/authServiceFactory";
 const { updateUserByEmail } = userService;
+const { register: registerService } = authService;
 
 import useAuth from "@/hooks/useAuth";
 
 import type { UserFormData } from "@/types/User";
+import type { RegisterFormDto } from "@/dto/RegisterFormDto";
 
 type Props = {
   open: boolean;
@@ -39,7 +43,38 @@ const initialFormState: UserFormData = {
   lastName: "",
   email: "",
   role: "USER",
+  phone: "",
+  area: "",
+  subarea: "",
 };
+
+const createUserSchema = z
+  .object({
+    firstName: z.string().min(1, "El nombre es obligatorio"),
+    lastName: z.string().min(1, "El apellido es obligatorio"),
+    email: z.email("El email no es válido"),
+    password: z
+      .string()
+      .min(6, "La contraseña debe tener al menos 6 caracteres.")
+      .regex(/[A-Z]/, "La contraseña debe tener al menos una letra mayúscula.")
+      .regex(/[a-z]/, "La contraseña debe tener al menos una letra minúscula.")
+      .regex(/\d/, "La contraseña debe tener al menos un número."),
+    confirmPassword: z.string().min(1, "Confirmá la contraseña"),
+    phone: z.string().optional(),
+    area: z.string().optional(),
+    subarea: z.string().optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Las contraseñas no coinciden",
+    path: ["confirmPassword"],
+  });
+
+const editUserSchema = z.object({
+  email: z.string().email("El email no es válido"),
+  role: z.string().nonempty("El rol es obligatorio"),
+  area: z.string().optional(),
+  subarea: z.string().optional(),
+});
 
 export default function EditUserModal({
   open,
@@ -53,6 +88,8 @@ export default function EditUserModal({
   const [form, setForm] = useState<UserFormData>(initialFormState);
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
   const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const token = getAccessToken();
 
@@ -63,9 +100,14 @@ export default function EditUserModal({
         lastName: user.lastName || "",
         email: user.email || "",
         role: user.role || "USER",
+        phone: user.phone || "",
+        area: user.area || "",
+        subarea: user.subarea || "",
       });
     } else {
       setForm(initialFormState);
+      setPassword("");
+      setConfirmPassword("");
     }
     setErrors({});
   }, [isEdit, user, open]);
@@ -90,28 +132,96 @@ export default function EditUserModal({
       logout();
       return;
     }
-    if (!isEdit) {
-      toast.info("Crear usuarios no está disponible desde este modal.");
-      return;
-    }
-    {
-      if (!form.firstName || !form.lastName) {
-        toast.error("Por favor completá todos los campos obligatorios.");
+    try {
+      if (!isEdit) {
+        // create validation
+        const parsed = createUserSchema.safeParse({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          password,
+          confirmPassword,
+          phone: form.phone,
+          area: form.area,
+          subarea: form.subarea,
+        });
+        if (!parsed.success) {
+          const fieldErrors: Partial<Record<string, string>> = {};
+          parsed.error.issues.forEach((issue) => {
+            const key = String(issue.path[0] ?? "");
+            fieldErrors[key] = issue.message;
+          });
+          setErrors(fieldErrors);
+          return;
+        }
+
+        setLoading(true);
+        const payload = {
+          firstName: parsed.data.firstName,
+          lastName: parsed.data.lastName,
+          email: parsed.data.email,
+          password: parsed.data.password,
+          phone: parsed.data.phone,
+          area: parsed.data.area,
+          subarea: parsed.data.subarea,
+        } as RegisterFormDto;
+
+        console.log("Payload registro:", payload);
+
+        const { success, message } = await registerService(payload);
+        setLoading(false);
+
+        if (!success) {
+          toast.error(message || "Error al crear el usuario.");
+          return;
+        }
+
+        onSave({ ...form } as UserFormData, false);
+        toast.success("Usuario creado correctamente.");
+        setModalOpen(false);
         return;
       }
+
+      const parsedEdit = editUserSchema.safeParse({
+        email: form.email,
+        role: form.role,
+        area: form.area,
+        subarea: form.subarea,
+      });
+      if (!parsedEdit.success) {
+        const fieldErrors: Partial<Record<string, string>> = {};
+        parsedEdit.error.issues.forEach((issue) => {
+          const key = String(issue.path[0] ?? "");
+          fieldErrors[key] = issue.message;
+        });
+        setErrors(fieldErrors);
+        return;
+      }
+
       setLoading(true);
-      const { success, user: updatedUser } = await updateUserByEmail(
+      const updatePayload: Partial<UserFormData> = {
+        email: parsedEdit.data.email,
+        role: parsedEdit.data.role,
+        area: parsedEdit.data.area,
+        subarea: parsedEdit.data.subarea,
+      };
+
+      const { success, user: updatedUser, message } = await updateUserByEmail(
         token,
-        form
+        updatePayload
       );
       setLoading(false);
 
       if (!success) {
-        toast.error("Error al actualizar el usuario.");
+        toast.error(message || "Error al actualizar el usuario.");
         return;
       }
-      if (updatedUser) onSave(updatedUser, isEdit);
+      if (updatedUser) onSave(updatedUser, true);
+      toast.success("Usuario actualizado correctamente");
       setModalOpen(false);
+    } catch (err) {
+      setLoading(false);
+      toast.error("Error al procesar la solicitud.");
     }
   };
 
@@ -145,14 +255,17 @@ export default function EditUserModal({
                 <Input
                   id="name"
                   value={form.firstName}
-                  disabled
+                  disabled={isEdit}
                   onChange={(e) =>
                     handleSelectChange("firstName", e.target.value)
                   }
                   className="w-2/3"
                 />
+                
               </div>
-
+              {errors.firstName && (
+                <p className="text-red-500 text-sm">{errors.firstName}</p>
+              )}
               <div className="flex">
                 <Label htmlFor="lastName" className="w-1/3 text-gray-600">
                   Apellido del usuario*
@@ -160,26 +273,120 @@ export default function EditUserModal({
                 <Input
                   id="lastName"
                   value={form.lastName}
-                  disabled
+                  disabled={isEdit}
                   onChange={(e) =>
                     handleSelectChange("lastName", e.target.value)
                   }
                   className="w-2/3"
                 />
               </div>
-
-              <div className="flex">
+              {errors.lastName && (
+                <p className="text-red-500 text-sm">{errors.lastName}</p>
+              )}
+              <div className="flex mb-5">
                 <Label htmlFor="email" className="w-1/3 text-gray-600">
                   Correo electrónico*
                 </Label>
                 <Input
                   id="email"
                   value={form.email}
-                  disabled
-                  readOnly
+                  disabled={isEdit}
+                  readOnly={isEdit}
+                  onChange={(e) => handleSelectChange("email", e.target.value)}
                   className="w-2/3"
                 />
               </div>
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-0.5">{errors.email}</p>
+              )}
+              <div className="flex">
+                <Label htmlFor="phone" className="w-1/3 text-gray-600">Telefono</Label>
+                <Input
+                  className="w-2/3"
+                  name="phone"
+                  value={form.phone}
+                  onChange={(e) => handleSelectChange("phone", e.target.value)}
+                />
+              </div>
+              {errors.phone && (
+                <p className="text-sm text-start text-red-500 mt-0.5">
+                  {errors.phone}
+                </p>
+              )}
+              <div className="flex">
+                <Label htmlFor="area" className="w-1/3 text-gray-600">
+                  Área
+                </Label>
+                <Input
+                  id="area"
+                  value={form.area}
+                  onChange={(e) => handleSelectChange("area", e.target.value)}
+                  className="w-2/3"
+                />
+              </div>
+              {errors.area && (
+                  <p className="text-red-500 text-sm">{errors.area}</p>
+                )}
+
+              <div className="flex">
+                <Label htmlFor="subarea" className="w-1/3 text-gray-600">
+                  Subárea
+                </Label>
+                <Input
+                  id="subarea"
+                  value={form.subarea}
+                  onChange={(e) =>
+                    handleSelectChange("subarea", e.target.value)
+                  }
+                  className="w-2/3"
+                />
+              </div>
+              {errors.subarea && (
+                <p className="text-red-500 text-sm">{errors.subarea}</p>
+              )}
+
+              {!isEdit && (
+                <>
+                  <div className="flex">
+                    <Label htmlFor="password" className="w-1/3 text-gray-600">
+                      Contraseña*
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (errors.password) setErrors((p) => ({ ...p, password: undefined }));
+                        if (errors.confirmPassword) setErrors((p) => ({ ...p, confirmPassword: undefined }));
+                      }}
+                      className="w-2/3"
+                    />
+                  </div>
+                  {errors.password && (
+                    <p className="text-red-500 text-sm">{errors.password}</p>
+                  )}
+
+                  <div className="flex">
+                    <Label htmlFor="confirmPassword" className="w-1/3 text-gray-600">
+                      Confirmar contraseña*
+                    </Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        if (errors.confirmPassword) setErrors((p) => ({ ...p, confirmPassword: undefined }));
+                      }}
+                      className="w-2/3"
+                    />
+                  </div>
+                  {errors.confirmPassword && (
+                    <p className="text-red-500 text-sm">{errors.confirmPassword}</p>
+                  )}
+                </>
+              )}
 
               <div className="flex">
                 <Label htmlFor="role" className="w-1/3 text-gray-600">
@@ -198,6 +405,9 @@ export default function EditUserModal({
                     <SelectItem value="AUDITOR">Auditor</SelectItem>
                   </SelectContent>
                 </Select>
+              {errors.role && (
+                <p className="text-red-500 text-sm">{errors.role}</p>
+              )}
               </div>
             </div>
           </div>
