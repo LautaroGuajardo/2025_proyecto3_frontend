@@ -23,13 +23,16 @@ import { z } from "zod";
 
 import { userService } from "@/services/factories/userServiceFactory";
 import { authService } from "@/services/factories/authServiceFactory";
+import { areaService } from "@/services/factories/areaServiceFactory";
 const { updateUserByEmail } = userService;
 const { register: registerService } = authService;
+const { getAllAreas } = areaService;
 
 import useAuth from "@/hooks/useAuth";
 
 import type { UserFormData } from "@/types/User";
 import type { RegisterFormDto } from "@/dto/RegisterFormDto";
+import ShowPasswordIcon from "@/components/common/ShowPasswordIcon";
 
 type Props = {
   open: boolean;
@@ -85,13 +88,33 @@ export default function EditUserModal({
   const { logout, getAccessToken } = useAuth();
   const isEdit = user !== null;
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [form, setForm] = useState<UserFormData>(initialFormState);
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [areas, setAreas] = useState<any[]>([]);
+  const [selectedAreaId, setSelectedAreaId] = useState("");
 
   const token = getAccessToken();
+  const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
+  const toggleConfirmPasswordVisibility = () =>
+    setShowConfirmPassword((prev) => !prev);
+
+  useEffect(() => {
+    const loadAreas = async () => {
+      if (!token) return;
+      const { success, areas: areasData } = await getAllAreas(token);
+      if (success && areasData) {
+        setAreas(areasData);
+      }
+    };
+    if (open) {
+      void loadAreas();
+    }
+  }, [open, token]);
 
   useEffect(() => {
     if (isEdit && user) {
@@ -104,13 +127,19 @@ export default function EditUserModal({
         area: user.area || "",
         subarea: user.subarea || "",
       });
+      // Find areaId from area name if editing
+      if (user.area) {
+        const foundArea = areas.find(a => a.name === user.area);
+        if (foundArea) setSelectedAreaId(foundArea.id);
+      }
     } else {
       setForm(initialFormState);
       setPassword("");
       setConfirmPassword("");
+      setSelectedAreaId("");
     }
     setErrors({});
-  }, [isEdit, user, open]);
+  }, [isEdit, user, open, areas]);
 
   const handleSelectChange = (
     field: keyof UserFormData,
@@ -124,6 +153,28 @@ export default function EditUserModal({
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
+
+  const handleAreaChange = (areaId: string) => {
+    setSelectedAreaId(areaId);
+    const selectedArea = areas.find(a => a.id === areaId);
+    if (selectedArea) {
+      setForm(prev => ({ ...prev, area: selectedArea.name, subarea: "" }));
+    }
+  };
+
+  const handleSubareaChange = (subareaId: string) => {
+    const selectedArea = areas.find(a => a.id === selectedAreaId);
+    if (selectedArea) {
+      const selectedSubarea = selectedArea.subareas?.find((s: any) => s.id === subareaId);
+      if (selectedSubarea) {
+        setForm(prev => ({ ...prev, subarea: selectedSubarea.name }));
+      }
+    }
+  };
+
+  const filteredSubareas = selectedAreaId
+    ? areas.find(a => a.id === selectedAreaId)?.subareas || []
+    : [];
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -253,6 +304,7 @@ export default function EditUserModal({
                   Nombre del usuario*
                 </Label>
                 <Input
+                  required
                   id="name"
                   value={form.firstName}
                   disabled={isEdit}
@@ -271,6 +323,7 @@ export default function EditUserModal({
                   Apellido del usuario*
                 </Label>
                 <Input
+                  required
                   id="lastName"
                   value={form.lastName}
                   disabled={isEdit}
@@ -288,6 +341,7 @@ export default function EditUserModal({
                   Correo electrónico*
                 </Label>
                 <Input
+                  required
                   id="email"
                   value={form.email}
                   disabled={isEdit}
@@ -317,12 +371,18 @@ export default function EditUserModal({
                 <Label htmlFor="area" className="w-1/3 text-gray-600">
                   Área
                 </Label>
-                <Input
-                  id="area"
-                  value={form.area}
-                  onChange={(e) => handleSelectChange("area", e.target.value)}
-                  className="w-2/3"
-                />
+                <Select value={selectedAreaId} onValueChange={handleAreaChange}>
+                  <SelectTrigger className="w-2/3">
+                    <SelectValue placeholder="Seleccione un área" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {areas.map((area) => (
+                      <SelectItem key={area.id} value={area.id}>
+                        {area.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               {errors.area && (
                   <p className="text-red-500 text-sm">{errors.area}</p>
@@ -332,14 +392,22 @@ export default function EditUserModal({
                 <Label htmlFor="subarea" className="w-1/3 text-gray-600">
                   Subárea
                 </Label>
-                <Input
-                  id="subarea"
-                  value={form.subarea}
-                  onChange={(e) =>
-                    handleSelectChange("subarea", e.target.value)
-                  }
-                  className="w-2/3"
-                />
+                <Select
+                  value={filteredSubareas.find((s: any) => s.name === form.subarea)?.id || ""}
+                  onValueChange={handleSubareaChange}
+                  disabled={!selectedAreaId}
+                >
+                  <SelectTrigger className="w-2/3">
+                    <SelectValue placeholder="Seleccione una subárea" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredSubareas.map((subarea: any) => (
+                      <SelectItem key={subarea.id} value={subarea.id}>
+                        {subarea.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               {errors.subarea && (
                 <p className="text-red-500 text-sm">{errors.subarea}</p>
@@ -351,17 +419,30 @@ export default function EditUserModal({
                     <Label htmlFor="password" className="w-1/3 text-gray-600">
                       Contraseña*
                     </Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        if (errors.password) setErrors((p) => ({ ...p, password: undefined }));
-                        if (errors.confirmPassword) setErrors((p) => ({ ...p, confirmPassword: undefined }));
-                      }}
-                      className="w-2/3"
-                    />
+                    <div className="relative w-2/3">
+                      <Input
+                        required
+                        className="w-full pr-10"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          if (errors.password)
+                            setErrors((p) => ({ ...p, password: undefined }));
+                          if (errors.confirmPassword)
+                            setErrors((p) => ({ ...p, confirmPassword: undefined }));
+                        }}
+                      />
+                  
+                      <button
+                        type="button"
+                        onClick={togglePasswordVisibility}
+                        className="absolute right-2 top-1/2 -translate-y-1/2"
+                      >
+                        <ShowPasswordIcon />
+                      </button>
+                    </div>
                   </div>
                   {errors.password && (
                     <p className="text-red-500 text-sm">{errors.password}</p>
@@ -371,16 +452,26 @@ export default function EditUserModal({
                     <Label htmlFor="confirmPassword" className="w-1/3 text-gray-600">
                       Confirmar contraseña*
                     </Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => {
-                        setConfirmPassword(e.target.value);
-                        if (errors.confirmPassword) setErrors((p) => ({ ...p, confirmPassword: undefined }));
-                      }}
-                      className="w-2/3"
-                    />
+                    <div className="relative w-2/3">
+                      <Input
+                        required
+                        name="confirmPassword"
+                        className="w-full pr-10"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => {
+                          setConfirmPassword(e.target.value);
+                          if (errors.confirmPassword) setErrors((p) => ({ ...p, confirmPassword: undefined }));
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={toggleConfirmPasswordVisibility}
+                        className="absolute right-2 top-1/2 -translate-y-1/2"
+                      >
+                        <ShowPasswordIcon />
+                      </button>
+                    </div>  
                   </div>
                   {errors.confirmPassword && (
                     <p className="text-red-500 text-sm">{errors.confirmPassword}</p>

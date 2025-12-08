@@ -137,6 +137,7 @@ export default function ClaimHistory() {
                   <TableHead className="text-gray-400">Empleado</TableHead>
                   <TableHead className="text-gray-400">Acción</TableHead>
                   <TableHead className="text-gray-400">Tipo</TableHead>
+                  <TableHead className="text-gray-400">Área</TableHead>
                   <TableHead className="text-gray-400">Subárea</TableHead>
                   <TableHead className="text-gray-400">Estado</TableHead>
                   <TableHead className="text-gray-400">Inicio</TableHead>
@@ -161,9 +162,10 @@ export default function ClaimHistory() {
                     <TableRow key={h.id}>
                       <TableCell>{h.claim?.claimCode ?? String(h.claim?.id ?? "-")}</TableCell>
                       <TableCell>{`${h.user?.firstName || ""} ${h.user?.lastName || ""}`}</TableCell>
-                      <TableCell>{h.accion || "-"}</TableCell>
+                      <TableCell>{h.action || "-"}</TableCell>
                       <TableCell>{h.claim?.claimType ?? "-"}</TableCell>
-                      <TableCell>{h.subarea?.name ?? (h.subarea ?? "-")}</TableCell>
+                      <TableCell>{h.area ?? (h.area ?? "-")}</TableCell>
+                      <TableCell>{h.subarea ?? (h.subarea ?? "-")}</TableCell>
                       <TableCell>{h.claimStatus ?? "-"}</TableCell>
                       <TableCell>{fmt(h.startDateHour)}</TableCell>
                       <TableCell>{fmt(h.endDateHour)}</TableCell>

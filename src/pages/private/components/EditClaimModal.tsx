@@ -16,13 +16,16 @@ import { toast } from "react-toastify";
 import { z } from "zod";
 
 import type { Claim } from "@/types/Claim";
+import type { Project } from "@/types/Project";
+import type { Area } from "@/types/Area";
+import { Role } from "@/types/Role";
 import { ClaimType } from "@/types/ClaimType";
 import { Criticality } from "@/types/Criticality";
 import { Priority } from "@/types/Priority";
 import useAuth from "@/hooks/useAuth";
 import { claimService } from "@/services/factories/claimServiceFactory";
 import { projectService } from "@/services/factories/projectServiceFactory";
-import { subareaService } from "@/services/factories/subareaServiceFactory";
+import { areaService } from "@/services/factories/areaServiceFactory";
 
 type Props = {
   open: boolean;
@@ -33,7 +36,7 @@ type Props = {
 
 export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: Props) {
   const isEdit = Boolean(claim && claim.id);
-  const { getAccessToken } = useAuth();
+  const { getAccessToken, role } = useAuth();
   const token = getAccessToken();
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -44,13 +47,16 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
   const [criticalityId, setCriticalityId] = useState("");
   const [priorityId, setPriorityId] = useState("");
   const [projectId, setProjectId] = useState("");
-  const [subareaId, setSubareaId] = useState("");
+  const [selectedAreaId, setSelectedAreaId] = useState("");
+  const [areaName, setAreaName] = useState("");
+  const [subareaName, setSubareaName] = useState("");
+  const isCustomer = role === Role.CUSTOMER;
 
   const claimTypes = Object.values(ClaimType) as string[];
   const criticalities = Object.values(Criticality) as string[];
   const priorities = Object.values(Priority) as string[];
-  const [projects, setProjects] = useState<any[]>([]);
-  const [subareas, setSubareas] = useState<any[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [areas, setAreas] = useState<Area[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
@@ -66,20 +72,21 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
     criticality: z.string().min(1, "La criticidad es obligatoria"),
     priority: z.string().min(1, "La prioridad es obligatoria"),
     projectId: z.string().min(1, "El proyecto es obligatorio"),
-    subareaId: z.string().optional(),
+    area: z.string().optional(),
+    subarea: z.string().optional(),
   });
 
   useEffect(() => {
     // load reference data
     const load = async () => {
       if (!token) return;
-      const [projRes, saRes] = await Promise.all([
+      const [projRes, areasRes] = await Promise.all([
         projectService.getAllProjects(token),
-        subareaService.getAllSubareas(token),
+        areaService.getAllAreas(token),
       ]);
 
       if (projRes.success && projRes.projects) setProjects(projRes.projects.map((c)=> ({...c, id: String((c).id)})));
-      if (saRes.success && saRes.subareas) setSubareas(saRes.subareas.map((c)=> ({...c, id: String((c).id)})));
+      if (areasRes.success && areasRes.areas) setAreas(areasRes.areas);
     };
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -95,7 +102,16 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         setCriticalityId(String((claim.criticality) ?? claim.criticality ?? ""));
         setPriorityId(String((claim.priority) ?? claim.priority ?? ""));
         setProjectId(String((claim.project)?.id ?? ""));
-        setSubareaId(String((claim.subarea)?.id ?? ""));
+        
+        const claimAreaStr = typeof claim.area === 'string' ? claim.area : (claim.area as any)?.name || "";
+        const claimSubareaStr = typeof claim.subarea === 'string' ? claim.subarea : (claim.subarea as any)?.name || "";
+        setAreaName(claimAreaStr);
+        setSubareaName(claimSubareaStr);
+        
+        if (claimAreaStr) {
+          const foundArea = areas.find(a => a.name === claimAreaStr);
+          if (foundArea) setSelectedAreaId(foundArea.id);
+        }
       } else {
         setClaimCode("");
         setDescription("");
@@ -103,7 +119,9 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         setCriticalityId("");
         setPriorityId("");
         setProjectId(String((claim).project?.id ?? ""));
-        setSubareaId("");
+        setSelectedAreaId("");
+        setAreaName("");
+        setSubareaName("");
       }
     } else {
       setClaimCode("");
@@ -112,9 +130,11 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
       setCriticalityId("");
       setPriorityId("");
       setProjectId("");
-      setSubareaId("");
+      setSelectedAreaId("");
+      setAreaName("");
+      setSubareaName("");
     }
-  }, [claim, open]);
+  }, [claim, open, areas]);
 
   const handleFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const list = e.target.files;
@@ -138,6 +158,30 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
     setFiles((prev) => prev.filter((_, i) => i !== index));
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
+
+  const handleAreaChange = (areaId: string) => {
+    setSelectedAreaId(areaId);
+    const selectedArea = areas.find(a => a.id === areaId);
+    if (selectedArea) {
+      setAreaName(selectedArea.name);
+      setSubareaName("");
+    }
+  };
+
+  const handleSubareaChange = (subareaId: string) => {
+    const selectedArea = areas.find(a => a.id === selectedAreaId);
+    if (selectedArea) {
+      const selectedSubarea = selectedArea.subareas?.find((s: any) => s.id === subareaId);
+      if (selectedSubarea) {
+        setSubareaName(selectedSubarea.name);
+      }
+    }
+  };
+
+  const filteredSubareas = selectedAreaId
+    ? areas.find(a => a.id === selectedAreaId)?.subareas || []
+    : [];
+
   const handleSave = async (e: React.FormEvent) => {
   e.preventDefault();
   if (!token) {
@@ -155,7 +199,8 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         criticality: criticalityId,
         priority: priorityId,
         projectId,
-        subareaId: subareaId || undefined,
+        area: areaName || undefined,
+        subarea: subareaName || undefined,
       });
       if (!parsed.success) {
         const fieldErrors: Partial<Record<string, string>> = {};
@@ -168,7 +213,8 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
       const toSave: Partial<Claim> = {
         ...parsed.data,
         project: projects.find((p) => String(p.id) === projectId),
-        subarea: subareas.find((s) => String(s.id) === subareaId),
+        area: areaName || undefined,
+        subarea: subareaName || undefined,
         attachments: files.length ? files : undefined,
       };
       const { success, message } = await claimService.updateClaimById(
@@ -190,7 +236,8 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         criticality: criticalityId,
         priority: priorityId,
         projectId,
-        subareaId: subareaId || undefined,
+        area: areaName || undefined,
+        subarea: subareaName || undefined,
       });
 
       if (!parsed.success) {
@@ -205,7 +252,8 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
       const toSave: Partial<Claim> = {
         ...parsed.data,
         project: projects.find((p) => String(p.id) === projectId),
-        subarea: subareas.find((s) => String(s.id) === subareaId),
+        area: areaName || undefined,
+        subarea: subareaName || undefined,
         attachments: files.length ? files : undefined,
       };
 
@@ -272,8 +320,16 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
 
               <div className="flex gap-1 flex-col">
                 <div className="flex w-full">
-                  <Label htmlFor="claimCode" className="text-nowrap text-gray-500 w-2/5">Código*</Label>
-                  <Input id="claimCode" name="claimCode" value={claimCode} onChange={(e)=>setClaimCode(e.target.value)} className="w-3/5" />
+                  <Label htmlFor="claimCode" className="text-nowrap text-gray-500 w-2/5">
+                  Código*
+                  </Label>
+                  <Input
+                    required
+                    id="claimCode" 
+                    name="claimCode" 
+                    value={claimCode} 
+                    onChange={(e)=>setClaimCode(e.target.value)} 
+                    className="w-3/5" />
                 </div>
                 <div className="w-3/5 ml-auto">
                   {errors.claimCode && (
@@ -284,8 +340,16 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
 
               <div className="flex gap-1 flex-col">
                 <div className="flex w-full">
-                  <Label htmlFor="description" className="text-nowrap text-gray-500 w-2/5">Descripción</Label>
-                  <Input id="description" name="description" value={description} onChange={(e)=>setDescription(e.target.value)} className="w-3/5" />
+                  <Label htmlFor="description" className="text-nowrap text-gray-500 w-2/5">
+                    Descripción*
+                  </Label>
+                  <Input
+                    required
+                    id="description" 
+                    name="description" 
+                    value={description} 
+                    onChange={(e)=>setDescription(e.target.value)} 
+                    className="w-3/5" />
                 </div>
                 <div className="w-3/5 ml-auto">
                   {errors.description && (
@@ -382,21 +446,45 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
                   <p className="text-sm text-start text-red-500">{errors.priority}</p>
                 )}
               </div>
+              
 
-              <div className="flex w-full">
-                <Label className="text-nowrap text-gray-500 w-2/5">Subárea</Label>
-                <Select value={subareaId} onValueChange={(v)=>setSubareaId(v)}>
-                  <SelectTrigger className="w-3/5"><SelectValue placeholder=""/></SelectTrigger>
-                  <SelectContent>
-                    {subareas.map((s)=> (<SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-3/5 ml-auto">
-                {errors.subareaId && (
-                  <p className="text-sm text-start text-red-500">{errors.subareaId}</p>
+              {!isCustomer && (
+                <>
+                  <div className="flex w-full">
+                    <Label className="text-nowrap text-gray-500 w-2/5">Área</Label>
+                    <Select value={selectedAreaId} onValueChange={handleAreaChange}>
+                      <SelectTrigger className="w-3/5"><SelectValue placeholder="Seleccione un área"/></SelectTrigger>
+                      <SelectContent>
+                        {areas.map((area)=> (<SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-3/5 ml-auto">
+                    {errors.area && (
+                      <p className="text-sm text-start text-red-500">{errors.area}</p>
+                    )}
+                  </div>
+    
+                  <div className="flex w-full">
+                    <Label className="text-nowrap text-gray-500 w-2/5">Subárea</Label>
+                    <Select
+                      value={filteredSubareas.find((s: any) => s.name === subareaName)?.id || ""}
+                      onValueChange={handleSubareaChange}
+                      disabled={!selectedAreaId}
+                    >
+                      <SelectTrigger className="w-3/5"><SelectValue placeholder="Seleccione una subárea"/></SelectTrigger>
+                      <SelectContent>
+                        {filteredSubareas.map((s: any)=> (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-3/5 ml-auto">
+                    {errors.subareaId && (
+                      <p className="text-sm text-start text-red-500">{errors.subareaId}</p>
+                    )}
+                  </div>
+                  </>
                 )}
-              </div>
 
               <div className="flex w-full items-center gap-3">
                 <Button variant="outline" className="w-1/2" type="button" onClick={() => onOpenChange(false)}>Cancelar</Button>
