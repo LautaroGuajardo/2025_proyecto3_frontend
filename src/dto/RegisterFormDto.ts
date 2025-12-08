@@ -1,0 +1,10 @@
+export interface RegisterFormDto {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  phone?: string;
+  area?: string;
+  subarea?: string;
+}
