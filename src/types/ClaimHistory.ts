@@ -6,8 +6,10 @@ export interface ClaimHistory {
   id: string;
   claim: Claim;
   claimStatus: ClaimStatus;
-  accion: string;
+  action: string;
   user: UserFormData;
+  area: string;
+  subarea: string;
   startDateHour: Date;
   endDateHour?: Date;
 }
