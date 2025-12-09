@@ -40,11 +40,7 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.17",
     "typescript": "~5.9.3",
-<<<<<<< HEAD
-    "typescript-eslint": "^8.46.4",
-=======
     "typescript-eslint": "^8.48.1",
->>>>>>> e35973f561af2fb39b67212ae45ca43576a856a6
     "vite": "^7.2.6"
   }
 }

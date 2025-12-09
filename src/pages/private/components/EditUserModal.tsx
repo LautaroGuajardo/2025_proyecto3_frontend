@@ -23,10 +23,8 @@ import { z } from "zod";
 
 import { userService } from "@/services/factories/userServiceFactory";
 import { authService } from "@/services/factories/authServiceFactory";
-import { areaService } from "@/services/factories/areaServiceFactory";
 const { updateUserByEmail } = userService;
 const { register: registerService } = authService;
-const { getAllAreas } = areaService;
 
 import useAuth from "@/hooks/useAuth";
 
@@ -47,8 +45,6 @@ const initialFormState: UserFormData = {
   email: "",
   role: "USER",
   phone: "",
-  area: "",
-  subarea: "",
 };
 
 const createUserSchema = z
@@ -64,8 +60,6 @@ const createUserSchema = z
       .regex(/\d/, "La contraseña debe tener al menos un número."),
     confirmPassword: z.string().min(1, "Confirmá la contraseña"),
     phone: z.string().optional(),
-    area: z.string().optional(),
-    subarea: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Las contraseñas no coinciden",
@@ -75,8 +69,6 @@ const createUserSchema = z
 const editUserSchema = z.object({
   email: z.string().email("El email no es válido"),
   role: z.string().nonempty("El rol es obligatorio"),
-  area: z.string().optional(),
-  subarea: z.string().optional(),
 });
 
 export default function EditUserModal({
@@ -95,26 +87,11 @@ export default function EditUserModal({
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [areas, setAreas] = useState<any[]>([]);
-  const [selectedAreaId, setSelectedAreaId] = useState("");
 
   const token = getAccessToken();
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
   const toggleConfirmPasswordVisibility = () =>
     setShowConfirmPassword((prev) => !prev);
-
-  useEffect(() => {
-    const loadAreas = async () => {
-      if (!token) return;
-      const { success, areas: areasData } = await getAllAreas(token);
-      if (success && areasData) {
-        setAreas(areasData);
-      }
-    };
-    if (open) {
-      void loadAreas();
-    }
-  }, [open, token]);
 
   useEffect(() => {
     if (isEdit && user) {
@@ -124,22 +101,14 @@ export default function EditUserModal({
         email: user.email || "",
         role: user.role || "USER",
         phone: user.phone || "",
-        area: user.area || "",
-        subarea: user.subarea || "",
       });
-      // Find areaId from area name if editing
-      if (user.area) {
-        const foundArea = areas.find(a => a.name === user.area);
-        if (foundArea) setSelectedAreaId(foundArea.id);
-      }
     } else {
       setForm(initialFormState);
       setPassword("");
       setConfirmPassword("");
-      setSelectedAreaId("");
     }
     setErrors({});
-  }, [isEdit, user, open, areas]);
+  }, [isEdit, user, open]);
 
   const handleSelectChange = (
     field: keyof UserFormData,
@@ -153,28 +122,6 @@ export default function EditUserModal({
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
-
-  const handleAreaChange = (areaId: string) => {
-    setSelectedAreaId(areaId);
-    const selectedArea = areas.find(a => a.id === areaId);
-    if (selectedArea) {
-      setForm(prev => ({ ...prev, area: selectedArea.name, subarea: "" }));
-    }
-  };
-
-  const handleSubareaChange = (subareaId: string) => {
-    const selectedArea = areas.find(a => a.id === selectedAreaId);
-    if (selectedArea) {
-      const selectedSubarea = selectedArea.subareas?.find((s: any) => s.id === subareaId);
-      if (selectedSubarea) {
-        setForm(prev => ({ ...prev, subarea: selectedSubarea.name }));
-      }
-    }
-  };
-
-  const filteredSubareas = selectedAreaId
-    ? areas.find(a => a.id === selectedAreaId)?.subareas || []
-    : [];
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,8 +140,6 @@ export default function EditUserModal({
           password,
           confirmPassword,
           phone: form.phone,
-          area: form.area,
-          subarea: form.subarea,
         });
         if (!parsed.success) {
           const fieldErrors: Partial<Record<string, string>> = {};
@@ -213,8 +158,6 @@ export default function EditUserModal({
           email: parsed.data.email,
           password: parsed.data.password,
           phone: parsed.data.phone,
-          area: parsed.data.area,
-          subarea: parsed.data.subarea,
         } as RegisterFormDto;
 
         console.log("Payload registro:", payload);
@@ -236,8 +179,6 @@ export default function EditUserModal({
       const parsedEdit = editUserSchema.safeParse({
         email: form.email,
         role: form.role,
-        area: form.area,
-        subarea: form.subarea,
       });
       if (!parsedEdit.success) {
         const fieldErrors: Partial<Record<string, string>> = {};
@@ -253,8 +194,6 @@ export default function EditUserModal({
       const updatePayload: Partial<UserFormData> = {
         email: parsedEdit.data.email,
         role: parsedEdit.data.role,
-        area: parsedEdit.data.area,
-        subarea: parsedEdit.data.subarea,
       };
 
       const { success, user: updatedUser, message } = await updateUserByEmail(
@@ -366,51 +305,6 @@ export default function EditUserModal({
                 <p className="text-sm text-start text-red-500 mt-0.5">
                   {errors.phone}
                 </p>
-              )}
-              <div className="flex">
-                <Label htmlFor="area" className="w-1/3 text-gray-600">
-                  Área
-                </Label>
-                <Select value={selectedAreaId} onValueChange={handleAreaChange}>
-                  <SelectTrigger className="w-2/3">
-                    <SelectValue placeholder="Seleccione un área" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {areas.map((area) => (
-                      <SelectItem key={area.id} value={area.id}>
-                        {area.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {errors.area && (
-                  <p className="text-red-500 text-sm">{errors.area}</p>
-                )}
-
-              <div className="flex">
-                <Label htmlFor="subarea" className="w-1/3 text-gray-600">
-                  Subárea
-                </Label>
-                <Select
-                  value={filteredSubareas.find((s: any) => s.name === form.subarea)?.id || ""}
-                  onValueChange={handleSubareaChange}
-                  disabled={!selectedAreaId}
-                >
-                  <SelectTrigger className="w-2/3">
-                    <SelectValue placeholder="Seleccione una subárea" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredSubareas.map((subarea: any) => (
-                      <SelectItem key={subarea.id} value={subarea.id}>
-                        {subarea.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {errors.subarea && (
-                <p className="text-red-500 text-sm">{errors.subarea}</p>
               )}
 
               {!isEdit && (
