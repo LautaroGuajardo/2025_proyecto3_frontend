@@ -26,8 +26,6 @@ export const USERS = [
     role: Role.USER,
     phone: "5555678901",
     password: "user1pass",
-    subarea: "Frontend",
-    area: "Desarrollo",
   },
   {
     email: "user2@example.com",
@@ -36,8 +34,6 @@ export const USERS = [
     role: Role.USER,
     phone: "5556789012",
     password: "user2pass",
-    subarea: "Backend",
-    area: "Desarrollo",
   },
   {
     email: "customer2@example.com",

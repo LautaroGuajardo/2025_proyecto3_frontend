@@ -5,6 +5,4 @@ export interface RegisterFormDto {
   password: string;
   confirmPassword: string;
   phone?: string;
-  area?: string;
-  subarea?: string;
 }

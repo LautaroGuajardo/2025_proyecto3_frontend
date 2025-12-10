@@ -15,4 +15,5 @@ export interface Claim {
   project: Project;
   subarea?: string;
   area?: string;
+  actions?: string;
 }

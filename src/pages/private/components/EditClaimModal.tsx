@@ -17,11 +17,12 @@ import { z } from "zod";
 
 import type { Claim } from "@/types/Claim";
 import type { Project } from "@/types/Project";
-import type { Area } from "@/types/Area";
+import type { Area, AreaFormData } from "@/types/Area";
 import { Role } from "@/types/Role";
 import { ClaimType } from "@/types/ClaimType";
 import { Criticality } from "@/types/Criticality";
 import { Priority } from "@/types/Priority";
+import { ClaimStatus } from "@/types/ClaimStatus";
 import useAuth from "@/hooks/useAuth";
 import { claimService } from "@/services/factories/claimServiceFactory";
 import { projectService } from "@/services/factories/projectServiceFactory";
@@ -46,15 +47,18 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
   const [claimTypeId, setClaimTypeId] = useState("");
   const [criticalityId, setCriticalityId] = useState("");
   const [priorityId, setPriorityId] = useState("");
+  const [statusId, setStatusId] = useState("");
   const [projectId, setProjectId] = useState("");
   const [selectedAreaId, setSelectedAreaId] = useState("");
   const [areaName, setAreaName] = useState("");
   const [subareaName, setSubareaName] = useState("");
+  const [actions, setActions] = useState("");
   const isCustomer = role === Role.CUSTOMER;
 
   const claimTypes = Object.values(ClaimType) as string[];
   const criticalities = Object.values(Criticality) as string[];
   const priorities = Object.values(Priority) as string[];
+  const statuses = Object.values(ClaimStatus) as string[];
   const [projects, setProjects] = useState<Project[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
 
@@ -74,10 +78,11 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
     projectId: z.string().min(1, "El proyecto es obligatorio"),
     area: z.string().optional(),
     subarea: z.string().optional(),
+    claimStatus: z.string().optional(),
+    actions: z.string().optional(),
   });
 
   useEffect(() => {
-    // load reference data
     const load = async () => {
       if (!token) return;
       const [projRes, areasRes] = await Promise.all([
@@ -101,10 +106,22 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         setClaimTypeId(String((claim.claimType) ?? claim.claimType ?? ""));
         setCriticalityId(String((claim.criticality) ?? claim.criticality ?? ""));
         setPriorityId(String((claim.priority) ?? claim.priority ?? ""));
+        setStatusId(String(claim.claimStatus ?? ""));
         setProjectId(String((claim.project)?.id ?? ""));
+        // Siempre dejar el campo 'actions' vacío al abrir el modal,
+        // porque debe ser completado cada vez que se haga un cambio.
+        setActions("");
         
-        const claimAreaStr = typeof claim.area === 'string' ? claim.area : (claim.area as any)?.name || "";
-        const claimSubareaStr = typeof claim.subarea === 'string' ? claim.subarea : (claim.subarea as any)?.name || "";
+        const claimAreaStr = typeof claim.area === 'string'
+          ? claim.area //si el area es string
+          : claim.area && typeof claim.area === 'object' && 'name' in claim.area
+            ? (claim.area as AreaFormData).name //si el area es objeto
+            : ""; //si el area es null o undefined
+        const claimSubareaStr = typeof claim.subarea === 'string'
+          ? claim.subarea
+          : claim.subarea && typeof claim.subarea === 'object' && 'name' in claim.subarea
+            ? (claim.subarea as AreaFormData).name
+            : "";
         setAreaName(claimAreaStr);
         setSubareaName(claimSubareaStr);
         
@@ -118,10 +135,12 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         setClaimTypeId("");
         setCriticalityId("");
         setPriorityId("");
+        setStatusId("");
         setProjectId(String((claim).project?.id ?? ""));
         setSelectedAreaId("");
         setAreaName("");
         setSubareaName("");
+        setActions("");
       }
     } else {
       setClaimCode("");
@@ -133,6 +152,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
       setSelectedAreaId("");
       setAreaName("");
       setSubareaName("");
+      setActions("");
     }
   }, [claim, open, areas]);
 
@@ -182,11 +202,34 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
     ? areas.find(a => a.id === selectedAreaId)?.subareas || []
     : [];
 
+  const estadoActual = claim?.claimStatus;
+  const allowedStatuses = React.useMemo(() => {
+    if (!isEdit) return statuses;
+    if (estadoActual === ClaimStatus.RESUELTO) return [ClaimStatus.RESUELTO];
+    if (estadoActual === ClaimStatus.PROGRESO) return [ClaimStatus.PROGRESO, ClaimStatus.RESUELTO];
+    return statuses;
+  }, [estadoActual, isEdit, statuses]);
+
+  const esResuelto = isEdit && estadoActual === ClaimStatus.RESUELTO;
+
   const handleSave = async (e: React.FormEvent) => {
   e.preventDefault();
   if (!token) {
     toast.error("Por favor inicia sesión");
     return;
+  }
+  if (esResuelto) {
+    toast.error("No se puede modificar un reclamo resuelto");
+    return;
+  }
+  if (!isCustomer) {
+    const extraErrors: Partial<Record<string, string>> = {};
+    if (!statusId) extraErrors.status = "El estado es obligatorio";
+    if (!actions.trim()) extraErrors.actions = "Las acciones son obligatorias";
+    if (Object.keys(extraErrors).length) {
+      setErrors((prev) => ({ ...prev, ...extraErrors }));
+      return;
+    }
   }
   setLoading(true);
   try {
@@ -201,6 +244,8 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         projectId,
         area: areaName || undefined,
         subarea: subareaName || undefined,
+        claimStatus: statusId || claim.claimStatus,
+        actions: actions || undefined,
       });
       if (!parsed.success) {
         const fieldErrors: Partial<Record<string, string>> = {};
@@ -215,6 +260,8 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         project: projects.find((p) => String(p.id) === projectId),
         area: areaName || undefined,
         subarea: subareaName || undefined,
+        claimStatus: statusId || claim.claimStatus,
+        actions: actions || undefined,
         attachments: files.length ? files : undefined,
       };
       const { success, message } = await claimService.updateClaimById(
@@ -238,6 +285,8 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         projectId,
         area: areaName || undefined,
         subarea: subareaName || undefined,
+        claimStatus: statusId || ClaimStatus.PENDIENTE,
+        actions: actions || undefined,
       });
 
       if (!parsed.success) {
@@ -254,6 +303,8 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         project: projects.find((p) => String(p.id) === projectId),
         area: areaName || undefined,
         subarea: subareaName || undefined,
+        claimStatus: statusId || ClaimStatus.PENDIENTE,
+        actions: actions || undefined,
         attachments: files.length ? files : undefined,
       };
 
@@ -304,11 +355,15 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
             <div className="space-y-6">
 
               <div className="flex w-full">
-                <Label className="text-nowrap text-gray-500 w-2/5">Proyecto</Label>
-                <Select value={projectId} onValueChange={(v)=>setProjectId(v)}>
-                  <SelectTrigger className="w-3/5"><SelectValue placeholder="Seleccione una opcion"/></SelectTrigger>
+                <Label className="text-nowrap text-gray-500 w-2/5">
+                  Proyecto
+                </Label>
+                <Select value={projectId} onValueChange={(v)=>setProjectId(v)} disabled={esResuelto}>
+                  <SelectTrigger className="w-3/5">
+                    <SelectValue placeholder="Seleccione una opcion"/>
+                  </SelectTrigger>
                   <SelectContent>
-                    {projects.map((p)=> (<SelectItem key={p.id} value={String(p.id)}>{p.title || p.name || `#${p.id}`}</SelectItem>))}
+                    {projects.map((p)=> (<SelectItem key={p.id} value={String(p.id)}>{p.title || `#${p.id}`}</SelectItem>))}
                   </SelectContent>
                 </Select>
               </div>
@@ -321,7 +376,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
               <div className="flex gap-1 flex-col">
                 <div className="flex w-full">
                   <Label htmlFor="claimCode" className="text-nowrap text-gray-500 w-2/5">
-                  Código*
+                    Código*
                   </Label>
                   <Input
                     required
@@ -329,6 +384,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
                     name="claimCode" 
                     value={claimCode} 
                     onChange={(e)=>setClaimCode(e.target.value)} 
+                    disabled={esResuelto}
                     className="w-3/5" />
                 </div>
                 <div className="w-3/5 ml-auto">
@@ -349,6 +405,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
                     name="description" 
                     value={description} 
                     onChange={(e)=>setDescription(e.target.value)} 
+                    disabled={esResuelto}
                     className="w-3/5" />
                 </div>
                 <div className="w-3/5 ml-auto">
@@ -360,7 +417,9 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
 
               <div className="flex gap-1">
                 <div className="flex w-full">
-                  <Label className="text-nowrap text-gray-500 w-2/5">Adjuntos</Label>
+                  <Label className="text-nowrap text-gray-500 w-2/5">
+                    Adjuntos
+                  </Label>
                   <div className="w-3/5">
                     <input
                       ref={fileInputRef}
@@ -368,11 +427,12 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
                       accept="image/*,application/pdf"
                       multiple
                       onChange={handleFilesChange}
+                      disabled={esResuelto}
                       className="hidden"
                     />
                     <div
                       className="border-dashed border-2 border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center gap-3 cursor-pointer"
-                      onClick={() => fileInputRef.current?.click()}
+                      onClick={() => { if (!esResuelto) fileInputRef.current?.click(); }}
                     >
                       <div className="text-sm text-muted-foreground">Sube imágenes (jpg/png) o PDF(s). Opcional.</div>
                       <div className="text-xs text-muted-foreground">Puedes subir varios archivos</div>
@@ -398,8 +458,10 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
 
               <div className="flex gap-1 flex-col">
                 <div className="flex w-full">
-                  <Label className="text-nowrap text-gray-500 w-2/5">Tipo de reclamo*</Label>
-                  <Select value={claimTypeId} onValueChange={(v)=>setClaimTypeId(v)}>
+                  <Label className="text-nowrap text-gray-500 w-2/5">
+                    Tipo de reclamo*
+                  </Label>
+                  <Select value={claimTypeId} onValueChange={(v)=>setClaimTypeId(v)} disabled={esResuelto}>
                     <SelectTrigger className="w-3/5">
                       <SelectValue placeholder="Seleccione una opcion" />
                     </SelectTrigger>
@@ -418,9 +480,13 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
               </div>
 
               <div className="flex w-full">
-                <Label className="text-nowrap text-gray-500 w-2/5">Criticidad*</Label>
-                <Select value={criticalityId} onValueChange={(v)=>setCriticalityId(v)}>
-                  <SelectTrigger className="w-3/5"><SelectValue placeholder="Seleccione una opcion"/></SelectTrigger>
+                <Label className="text-nowrap text-gray-500 w-2/5">
+                  Criticidad*
+                </Label>
+                <Select value={criticalityId} onValueChange={(v)=>setCriticalityId(v)} disabled={esResuelto}>
+                  <SelectTrigger className="w-3/5">
+                    <SelectValue placeholder="Seleccione una opcion"/>
+                  </SelectTrigger>
                   <SelectContent>
                     {criticalities.map((c)=> (<SelectItem key={String(c)} value={String(c)}>{String(c)}</SelectItem>))}
                   </SelectContent>
@@ -433,9 +499,13 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
               </div>
 
               <div className="flex w-full">
-                <Label className="text-nowrap text-gray-500 w-2/5">Prioridad*</Label>
-                <Select value={priorityId} onValueChange={(v)=>setPriorityId(v)}>
-                  <SelectTrigger className="w-3/5"><SelectValue placeholder="Seleccione una opcion"/></SelectTrigger>
+                <Label className="text-nowrap text-gray-500 w-2/5">
+                  Prioridad*
+                </Label>
+                <Select value={priorityId} onValueChange={(v)=>setPriorityId(v)} disabled={esResuelto}>
+                  <SelectTrigger className="w-3/5">
+                    <SelectValue placeholder="Seleccione una opcion"/>
+                  </SelectTrigger>
                   <SelectContent>
                     {priorities.map((p)=> (<SelectItem key={String(p)} value={String(p)}>{String(p)}</SelectItem>))}
                   </SelectContent>
@@ -451,9 +521,13 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
               {!isCustomer && (
                 <>
                   <div className="flex w-full">
-                    <Label className="text-nowrap text-gray-500 w-2/5">Área</Label>
-                    <Select value={selectedAreaId} onValueChange={handleAreaChange}>
-                      <SelectTrigger className="w-3/5"><SelectValue placeholder="Seleccione un área"/></SelectTrigger>
+                    <Label className="text-nowrap text-gray-500 w-2/5">
+                      Área
+                    </Label>
+                    <Select value={selectedAreaId} onValueChange={handleAreaChange} disabled={esResuelto}>
+                      <SelectTrigger className="w-3/5">
+                        <SelectValue placeholder="Seleccione un área"/>
+                      </SelectTrigger>
                       <SelectContent>
                         {areas.map((area)=> (<SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>))}
                       </SelectContent>
@@ -466,11 +540,13 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
                   </div>
     
                   <div className="flex w-full">
-                    <Label className="text-nowrap text-gray-500 w-2/5">Subárea</Label>
+                    <Label className="text-nowrap text-gray-500 w-2/5">
+                      Subárea
+                    </Label>
                     <Select
                       value={filteredSubareas.find((s: any) => s.name === subareaName)?.id || ""}
                       onValueChange={handleSubareaChange}
-                      disabled={!selectedAreaId}
+                      disabled={!selectedAreaId || esResuelto}
                     >
                       <SelectTrigger className="w-3/5"><SelectValue placeholder="Seleccione una subárea"/></SelectTrigger>
                       <SelectContent>
@@ -483,12 +559,52 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
                       <p className="text-sm text-start text-red-500">{errors.subareaId}</p>
                     )}
                   </div>
-                  </>
+
+                  <div className="flex w-full">
+                    <Label className="text-nowrap text-gray-500 w-2/5">
+                      Estado
+                    </Label>
+                    <Select value={statusId} onValueChange={(v)=>setStatusId(v)} disabled={esResuelto}>
+                      <SelectTrigger className="w-3/5">
+                        <SelectValue placeholder="Seleccione una opcion"/>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allowedStatuses.map((s)=> (<SelectItem key={String(s)} value={String(s)}>{String(s)}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-3/5 ml-auto">
+                    {errors.status && (
+                      <p className="text-sm text-start text-red-500">{errors.status}</p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-1 flex-col">
+                    <div className="flex w-full">
+                      <Label htmlFor="actions" className="text-nowrap text-gray-500 w-2/5">
+                        Acciones*
+                      </Label>
+                      <Input
+                        required
+                        id="actions" 
+                        name="actions" 
+                        value={actions} 
+                        onChange={(e)=>setActions(e.target.value)} 
+                        disabled={esResuelto}
+                        className="w-3/5" />
+                    </div>
+                    <div className="w-3/5 ml-auto">
+                      {errors.actions && (
+                        <p className="text-sm text-start text-red-500">{errors.actions}</p>
+                      )}
+                    </div>
+                  </div>
+                </>
                 )}
 
               <div className="flex w-full items-center gap-3">
                 <Button variant="outline" className="w-1/2" type="button" onClick={() => onOpenChange(false)}>Cancelar</Button>
-                <Button className="w-1/2" type="submit" disabled={loading} variant="default">
+                <Button className="w-1/2" type="submit" disabled={loading || esResuelto} variant="default">
                   {loading ? <Edit className="animate-spin"/> : null}
                   {isEdit ? "Guardar cambios" : "Crear reclamo"}
                 </Button>

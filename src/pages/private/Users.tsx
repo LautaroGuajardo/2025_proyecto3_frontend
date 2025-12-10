@@ -227,8 +227,6 @@ export default function Users() {
                     <TableHead className="text-gray-400">Nombre</TableHead>
                     <TableHead className="text-gray-400">Apellido</TableHead>
                     <TableHead className="text-gray-400">Rol</TableHead>
-                    <TableHead className="text-gray-400">Subárea</TableHead>
-                    <TableHead className="text-gray-400">Area</TableHead>
                     <TableHead className="text-gray-400">Correo electrónico</TableHead>
                     <TableHead className="text-gray-400">Telefono</TableHead>
                     <TableHead className="text-center text-gray-400">
@@ -268,12 +266,8 @@ export default function Users() {
                             ? user.lastName.slice(0, 50)
                             : user.lastName}
                         </TableCell>
-                        <TableCell>{user.role}</TableCell>
                         <TableCell>
-                          {user.subarea ?? "---"}
-                        </TableCell>
-                        <TableCell>
-                          {user.area ?? "---"}
+                          {user.role}
                         </TableCell>
                         <TableCell>
                           {user.email.length > 50
