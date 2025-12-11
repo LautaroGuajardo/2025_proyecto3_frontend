@@ -262,7 +262,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         subarea: subareaName || undefined,
         claimStatus: statusId || claim.claimStatus,
         actions: actions || undefined,
-        attachments: files.length ? files : undefined,
+        // attachments no modificables en edición
       };
       const { success, message } = await claimService.updateClaimById(
         token,
@@ -358,7 +358,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
                 <Label className="text-nowrap text-gray-500 w-2/5">
                   Proyecto
                 </Label>
-                <Select value={projectId} onValueChange={(v)=>setProjectId(v)} disabled={esResuelto}>
+                <Select value={projectId} onValueChange={(v)=>setProjectId(v)} disabled={isEdit || esResuelto}>
                   <SelectTrigger className="w-3/5">
                     <SelectValue placeholder="Seleccione una opcion"/>
                   </SelectTrigger>
@@ -384,7 +384,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
                     name="claimCode" 
                     value={claimCode} 
                     onChange={(e)=>setClaimCode(e.target.value)} 
-                    disabled={esResuelto}
+                    disabled={isEdit || esResuelto}
                     className="w-3/5" />
                 </div>
                 <div className="w-3/5 ml-auto">
@@ -405,7 +405,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
                     name="description" 
                     value={description} 
                     onChange={(e)=>setDescription(e.target.value)} 
-                    disabled={esResuelto}
+                    disabled={isEdit || esResuelto}
                     className="w-3/5" />
                 </div>
                 <div className="w-3/5 ml-auto">
@@ -427,12 +427,12 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
                       accept="image/*,application/pdf"
                       multiple
                       onChange={handleFilesChange}
-                      disabled={esResuelto}
+                      disabled={isEdit || esResuelto}
                       className="hidden"
                     />
                     <div
                       className="border-dashed border-2 border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center gap-3 cursor-pointer"
-                      onClick={() => { if (!esResuelto) fileInputRef.current?.click(); }}
+                      onClick={() => { if (!isEdit && !esResuelto) fileInputRef.current?.click(); }}
                     >
                       <div className="text-sm text-muted-foreground">Sube imágenes (jpg/png) o PDF(s). Opcional.</div>
                       <div className="text-xs text-muted-foreground">Puedes subir varios archivos</div>
@@ -447,7 +447,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
                             ) : (
                               <div className="text-sm truncate">{p.name}</div>
                             )}
-                            <button type="button" className="text-xs text-rose-600 mt-1" onClick={() => removeFileAt(i)}>Eliminar</button>
+                            <button type="button" className="text-xs text-rose-600 mt-1" onClick={() => removeFileAt(i)} disabled={isEdit || esResuelto}>Eliminar</button>
                           </div>
                         ))}
                       </div>

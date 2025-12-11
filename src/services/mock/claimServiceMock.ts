@@ -5,6 +5,9 @@ import { ClaimType } from "@/types/ClaimType";
 import { Priority } from "@/types/Priority";
 import { ClaimStatus } from "@/types/ClaimStatus";
 import { PROJECTS } from "./projectServiceMock";
+import { appendClaimHistoryMock } from "./claimHistoryServiceMock";
+import type { ClaimHistory } from "@/types/ClaimHistory";
+import { USERS } from "./userServiceMock";
 
 export const CLAIMS: Claim[] = [
   {
@@ -163,14 +166,44 @@ class ClaimServiceMock implements IClaimService {
       project: claim.project ?? PROJECTS[0],
       subarea: claim.subarea ?? undefined,
     };
-	console.log("Mock createClaim:", newClaim);
     CLAIMS.push(newClaim);
+    // ESTO AGREGA LA PRIMER ENTRADA AL HISTORIAL
+    const historyEntry: ClaimHistory = {
+      id: String(Date.now()),
+      claimId: newClaim.id,
+      claimStatus: ClaimStatus.PENDIENTE,
+      claimType: newClaim.claimType,
+      action: "Creación de reclamo",
+      area: newClaim.area ?? "",
+      subarea: newClaim.subarea ?? "",
+      startDateHour: new Date(),
+      endDateHour: undefined,
+    };
+    appendClaimHistoryMock(historyEntry);
+
     return { success: true, claim: newClaim };
   }  
   async updateClaimById(_token: string, claimId: string, claim: Partial<Claim>) {
     const idx = CLAIMS.findIndex((c) => c.id === claimId);
     if (idx === -1) return { success: false, message: "Reclamo no encontrado (mock)" };
-    CLAIMS[idx] = { ...CLAIMS[idx], ...claim } as Claim;
+    const previous = CLAIMS[idx];
+    const updated = { ...previous, ...claim } as Claim;
+    CLAIMS[idx] = updated;
+
+    // ESTO AGREGA EL CAMBIO AL HISTORIAL
+    const historyEntry: ClaimHistory = {
+      id: String(Date.now()),
+      claimId: updated.id,
+      claimStatus: updated.claimStatus,
+      claimType: updated.claimType,
+      action: updated.actions,
+      user: USERS[0],
+      area: updated.area ?? previous.area ?? "",
+      subarea: updated.subarea ?? previous.subarea ?? "",
+      startDateHour: new Date(),
+      endDateHour: undefined,
+    };
+    appendClaimHistoryMock(historyEntry);
     return { success: true, claim: CLAIMS[idx] };
   }  
   async deleteClaimById(_token: string, claimId: string) {
