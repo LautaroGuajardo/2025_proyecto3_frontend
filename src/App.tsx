@@ -1,35 +1,79 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Suspense, useEffect } from "react";
+import { Route, Routes, Navigate, useNavigate } from "react-router";
+import "./App.css";
+
+import {
+  getProtectedRoutesForRole,
+  getPublicRoutes,
+  isPublicRoute,
+} from "./routes";
+
+import MainLayout from "@/layouts/MainLayout.tsx";
+import RequireAuth from "@/layouts/RequiredAuth.tsx";
+
+import useAuth from "@/hooks/useAuth.tsx";
+import LoadingFallback from "@/components/common/LoadingFallback.tsx";
+
+import { isValidRole } from "@/types/Role";
+import { lazy } from "react";
+
+const NotFound = lazy(() => import("@/pages/public/NotFound"));
 
 function App() {
-  const [count, setCount] = useState(0)
+  const navigate = useNavigate();
+  const { isLoggedIn, authLoading, role } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && !isLoggedIn) {
+      const pathname = window.location.pathname;
+      if (!isPublicRoute(pathname)) {
+        navigate("/login", { replace: true });
+      }
+    }
+  }, [authLoading, isLoggedIn, navigate]);
+
+  if (authLoading) return <LoadingFallback />;
+
+
+  const dynamicRoutes = isValidRole(role)
+    ? getProtectedRoutesForRole(role)
+    : [];
+  
+
+  const publicRoutes = getPublicRoutes();
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="flex flex-col min-h-screen w-dvw max-w-dvw min-w-0">
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          {publicRoutes.map((route) => (
+            <Route
+              key={route.to}
+              path={route.to}
+              element={
+                isLoggedIn ? (
+                  <Navigate to="/claims" replace />
+                ) : (
+                  route.element
+                )
+              }
+            />
+          ))}
+
+          <Route element={<RequireAuth />}>
+            <Route path="/" element={<MainLayout />}>
+              <Route index element={<Navigate to="/claims" replace />} />
+              {dynamicRoutes.map((route) => (
+                <Route key={route.to} path={route.to} element={route.element} />
+              ))}
+            </Route>
+          </Route>
+          {/* 👇 Ruta 404 al final */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </div>
+  );
 }
 
-export default App
+export default App;
