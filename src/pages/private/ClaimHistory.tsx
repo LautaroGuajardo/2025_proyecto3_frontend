@@ -22,9 +22,11 @@ import { Button } from "@/components/ui/button";
 import FetchingSpinner from "@/components/common/FetchingSpinner";
 import { claimHistoryService } from "@/services/factories/claimHistoryServiceFactory";
 import { useParams } from "react-router-dom";
+import { Role } from "@/types/Role";
 
 export default function ClaimHistory() {
-  const { getAccessToken, logout } = useAuth();
+  const { getAccessToken, logout, role } = useAuth();
+  const isCustomer = role === Role.CUSTOMER;
   const token = getAccessToken();
 
   const [loading, setLoading] = useState(true);
@@ -136,9 +138,9 @@ export default function ClaimHistory() {
                   <TableHead className="text-gray-400">Reclamo</TableHead>
                   <TableHead className="text-gray-400">Empleado</TableHead>
                   <TableHead className="text-gray-400">Acción</TableHead>
-                  <TableHead className="text-gray-400">Tipo</TableHead>
+                  <TableHead className="text-gray-400">Tipo Reclamo</TableHead>
                   <TableHead className="text-gray-400">Área</TableHead>
-                  <TableHead className="text-gray-400">Subárea</TableHead>
+                  {!isCustomer && <TableHead className="text-gray-400">Subárea</TableHead>}
                   <TableHead className="text-gray-400">Estado</TableHead>
                   <TableHead className="text-gray-400">Inicio</TableHead>
                   <TableHead className="text-gray-400">Fin</TableHead>
@@ -160,12 +162,12 @@ export default function ClaimHistory() {
                 ) : (
                   paginated.map((h) => (
                     <TableRow key={h.id}>
-                      <TableCell>{h.claim?.claimCode ?? String(h.claim?.id ?? "-")}</TableCell>
+                      <TableCell>{h.claimId}</TableCell>
                       <TableCell>{`${h.user?.firstName || ""} ${h.user?.lastName || ""}`}</TableCell>
                       <TableCell>{h.action || "-"}</TableCell>
-                      <TableCell>{h.claim?.claimType ?? "-"}</TableCell>
+                      <TableCell>{h.claimType}</TableCell>
                       <TableCell>{h.area ?? (h.area ?? "-")}</TableCell>
-                      <TableCell>{h.subarea ?? (h.subarea ?? "-")}</TableCell>
+                      {!isCustomer && <TableCell>{h.subarea ?? (h.subarea ?? "-")}</TableCell>}
                       <TableCell>{h.claimStatus ?? "-"}</TableCell>
                       <TableCell>{fmt(h.startDateHour)}</TableCell>
                       <TableCell>{fmt(h.endDateHour)}</TableCell>

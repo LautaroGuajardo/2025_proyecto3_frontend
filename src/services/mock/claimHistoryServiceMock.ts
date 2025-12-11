@@ -1,13 +1,14 @@
 import type { IClaimHistoryService } from "../interfaces/IClaimHistoryService";
 import type { ClaimHistory } from "@/types/ClaimHistory";
 import { ClaimStatus } from "@/types/ClaimStatus";
-import { CLAIMS } from "./claimServiceMock"
 import { USERS } from "./userServiceMock";
+import { ClaimType } from "@/types/ClaimType";
 
 const CLAIM_HISTORY: ClaimHistory[] = [
   {
     id: "1",
-    claim: CLAIMS[0],
+    claimId: "1",
+    claimType: ClaimType.TECNICO,
     claimStatus: ClaimStatus.PENDIENTE,
     action: "",
     user: USERS[2],
@@ -18,7 +19,8 @@ const CLAIM_HISTORY: ClaimHistory[] = [
   },
   {
     id: "2",
-    claim: CLAIMS[0],
+    claimId: "1",
+    claimType: ClaimType.TECNICO,
     claimStatus: ClaimStatus.PROGRESO,
     action: "",
     area: "Infraestructura",
@@ -29,7 +31,8 @@ const CLAIM_HISTORY: ClaimHistory[] = [
   },
   {
     id: "3",
-    claim: CLAIMS[0],
+    claimId: "1",
+    claimType: ClaimType.TECNICO,
     claimStatus: ClaimStatus.PROGRESO,
     action: "",
     area: "Infraestructura",
@@ -40,7 +43,8 @@ const CLAIM_HISTORY: ClaimHistory[] = [
   },
   {
     id: "4",
-    claim: CLAIMS[0],
+    claimId: "1",
+    claimType: ClaimType.TECNICO,
     claimStatus: ClaimStatus.PROGRESO,
     action: "",
     area: "Infraestructura",
@@ -51,7 +55,8 @@ const CLAIM_HISTORY: ClaimHistory[] = [
   },
   {
     id: "5",
-    claim: CLAIMS[0],
+    claimId: "1",
+    claimType: ClaimType.TECNICO,
     claimStatus: ClaimStatus.PENDIENTE,
     action: "",
     area: "Infraestructura",
@@ -62,7 +67,8 @@ const CLAIM_HISTORY: ClaimHistory[] = [
   },
   {
     id: "6",
-    claim: CLAIMS[0],
+    claimId: "1",
+    claimType: ClaimType.TECNICO,
     claimStatus: ClaimStatus.PENDIENTE,
     action: "",
     area: "Infraestructura",
@@ -73,6 +79,11 @@ const CLAIM_HISTORY: ClaimHistory[] = [
   },
 ]
 
+export const appendClaimHistoryMock = (entry: ClaimHistory) => {
+  CLAIM_HISTORY.push(entry);
+  console.log("Mock appendClaimHistory:", entry);
+};
+
 class ClaimHistoryServiceMock implements IClaimHistoryService {
   async getClaimHistoryById(
     token: string,
@@ -80,7 +91,7 @@ class ClaimHistoryServiceMock implements IClaimHistoryService {
   ): Promise<{ success: boolean; message?: string; claimHistory?: ClaimHistory[] }> {
     void token;
     const claimHistory = CLAIM_HISTORY.filter((c) => {
-      const candidateId = c.claim && typeof c.claim === "object" ? c.claim.id : c.claim;
+      const candidateId = c.claimId;
       return String(candidateId) === String(claimId);
     });
     return { success: true, claimHistory };

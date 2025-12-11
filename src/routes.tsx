@@ -22,6 +22,7 @@ const Register = lazy(() => import("@/pages/public/Register"));
 
 const Projects = lazy(() => import("@/pages/private/Projects"));
 const Users = lazy(() => import("@/pages/private/Users"));
+const Dashboard = lazy(() => import("@/pages/private/Dashboard"));
 
 export const publicRoutes: RouteItem[] = [
   {
@@ -68,6 +69,12 @@ export const roleBasedRoutes: Record<Role, RouteItem[]> = {
       to: "/users",
       icon: User,
       element: <Users />,
+    },
+    {
+      label: "Dashboard",
+      to: "/dashboard",
+      icon: MessageCircleWarning,
+      element: <Dashboard />,
     },
   ],
   [Role.ADMIN]: [
