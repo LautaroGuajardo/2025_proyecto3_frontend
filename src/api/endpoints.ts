@@ -24,6 +24,11 @@ export const API_ENDPOINTS = {
     GET_ALL: "/areas",
   },
 
+  messages: {
+    SEND_MESSAGE: (id: string) => `/claims/${id}`,
+    GET_MESSAGES_BY_CLAIM_ID: (claimId: string) => `/claims/${claimId}`,
+  },
+
   subareas: {
     GET_ALL: "/sub-areas",
   },
