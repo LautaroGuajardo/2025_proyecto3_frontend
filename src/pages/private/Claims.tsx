@@ -111,7 +111,7 @@ export default function Claims() {
 
       if (!q) return true;
       return (
-        (c.claimCode || "").toLowerCase().includes(q) ||
+        ((c.id || "").toLowerCase().includes(q)) ||
         (c.description || "").toLowerCase().includes(q) ||
         (c.claimType || "").toLowerCase().includes(q) ||
         (c.area || "").toLowerCase().includes(q)
@@ -203,7 +203,7 @@ export default function Claims() {
                   ) : (
                     paginated.map((claim: Claim) => (
                       <TableRow key={claim.id}>
-                        <TableCell>{claim.claimCode}</TableCell>
+                        <TableCell>{claim.id}</TableCell>
                         <TableCell>{claim.description}</TableCell>
                         <TableCell>{getLabel(claim.claimType)}</TableCell>
                         <TableCell>{getLabel(claim.criticality)}</TableCell>
