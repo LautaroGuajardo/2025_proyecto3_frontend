@@ -16,6 +16,7 @@ class TokenServiceMock implements ITokenService {
       }
       return Promise.resolve({ success: true });
     } catch (error) {
+      void error;
       return Promise.resolve({
         success: false,
         message: "Token inválido",

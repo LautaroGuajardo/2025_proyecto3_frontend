@@ -108,17 +108,6 @@ class ProjectServiceMock implements IProjectService {
     return { success: true, projects: PROJECTS };
   }
 
-  async getProjectsByUserId(_token: string, userId: string) {
-    const projects = PROJECTS.filter((p) => p.user.email === userId);
-    return { success: true, projects };
-  }
-
-  async getProjectById(_token: string, projectId: string) {
-    const project = PROJECTS.find((p) => p.id === projectId);
-    if (!project) return { success: false, message: "Proyecto no encontrado (mock)" };
-    return { success: true, project };
-  }
-
   async createProject(_token: string, project: Partial<Project>) {
     const newProject: Project = {
       id: "20",
@@ -132,8 +121,8 @@ class ProjectServiceMock implements IProjectService {
     return { success: true, project: newProject };
   }
 
-  async updateProjectById(_token: string, projectId: string, project: Partial<Project>) {
-    const idx = PROJECTS.findIndex((p) => p.id === projectId);
+  async updateProjectById(_token: string, project: Partial<Project>) {
+    const idx = PROJECTS.findIndex((p) => p.id === project.id);
     if (idx === -1) return { success: false, message: "Proyecto no encontrado (mock)" };
     PROJECTS[idx] = { ...PROJECTS[idx], ...project };
     return { success: true, project: PROJECTS[idx] };

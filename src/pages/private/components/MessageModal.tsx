@@ -165,6 +165,7 @@ export default function MessageModal({ open, onOpenChange, claimId }: Props) {
             <div className="flex w-full">
               <Label className="text-nowrap text-gray-500 w-1/4">Mensaje</Label>
               <Input
+                required
                 id="message"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}

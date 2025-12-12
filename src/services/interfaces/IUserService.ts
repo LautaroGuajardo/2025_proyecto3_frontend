@@ -19,13 +19,6 @@ export interface IUserService {
     token: string,
     email: string
   ): Promise<{ success: boolean; message?: string }>;
-  changePassword(
-    token: string,
-    email: string,
-    oldPassword: string,
-    newPassword: string,
-    confirmPassword: string
-  ): Promise<{ success: boolean; message?: string }>;
   updateUserProfile(
     token: string,
     user: Partial<User>

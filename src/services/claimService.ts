@@ -32,39 +32,6 @@ class ClaimServiceReal implements IClaimService {
     }
   }
 
-  async getClaimById(
-    token: string,
-    claimId: string
-  ): Promise<{ success: boolean; message?: string; claim?: Claim }> {
-    try {
-      const response = await fetch(
-        apiEndpoints.claims.GET_CLAIM_BY_ID(claimId),
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Error al obtener el reclamo");
-      }
-      const claim: Claim = await response.json();
-      return {
-        success: true,
-        claim: claim,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message:
-          error instanceof Error
-            ? error.message
-            : "Error desconocido al obtener el reclamo",
-      };
-    }
-  }
-
   async createClaim(
     token: string,
     claim: Partial<Claim>
@@ -99,12 +66,11 @@ class ClaimServiceReal implements IClaimService {
 
   async updateClaimById(
     token: string,
-    claimId: string,
     claim: Partial<Claim>
   ): Promise<{ success: boolean; message?: string; claim?: Claim }> {
     try {
       const response = await fetch(
-        apiEndpoints.claims.UPDATE_CLAIM_BY_ID(claimId),
+        apiEndpoints.claims.UPDATE_CLAIM_BY_ID(claim.id),
         {
           method: "PATCH",
           headers: {
@@ -129,37 +95,6 @@ class ClaimServiceReal implements IClaimService {
           error instanceof Error
             ? error.message
             : "Error desconocido al actualizar el reclamo",
-      };
-    }
-  }
-
-  async deleteClaimById(
-    token: string,
-    claimId: string
-  ): Promise<{ success: boolean; message?: string }> {
-    try {
-      const response = await fetch(
-        apiEndpoints.claims.DELETE_CLAIM_BY_ID(claimId),
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Error al eliminar el reclamo");
-      }
-      return {
-        success: true,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message:
-          error instanceof Error
-            ? error.message
-            : "Error desconocido al eliminar el reclamo",
       };
     }
   }

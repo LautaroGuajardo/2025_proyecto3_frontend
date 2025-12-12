@@ -211,7 +211,7 @@ export default function EditUserModal({
       setModalOpen(false);
     } catch (err) {
       setLoading(false);
-      toast.error("Error al procesar la solicitud.");
+      toast.error("Error al procesar la solicitud:" + err);
     }
   };
 

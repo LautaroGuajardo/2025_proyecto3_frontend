@@ -2,13 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import {
   Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 import useAuth from "@/hooks/useAuth";
 import { claimService } from "@/services/factories/claimServiceFactory";
 import { projectService } from "@/services/factories/projectServiceFactory";
@@ -16,10 +11,9 @@ import { userService } from "@/services/factories/userServiceFactory";
 import { claimHistoryService } from "@/services/factories/claimHistoryServiceFactory";
 import type { Claim } from "@/types/Claim";
 import type { Project } from "@/types/Project";
-import type { User } from "@/types/User";
+import type { UserFormData } from "@/types/User";
 import type { ClaimHistory } from "@/types/ClaimHistory";
 import { ClaimStatus } from "@/types/ClaimStatus";
-import { ClaimType } from "@/types/ClaimType";
 import DashboardCharts from "./components/DashboardCharts";
 
 export default function Dashboard() {
@@ -28,7 +22,7 @@ export default function Dashboard() {
 
   const [claims, setClaims] = useState<Claim[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserFormData[]>([]);
   const [histories, setHistories] = useState<ClaimHistory[]>([]);
 
   useEffect(() => {
@@ -46,27 +40,28 @@ export default function Dashboard() {
         ]);
 
         if (claimsRes.success && claimsRes.claims) {
-          const normalized = claimsRes.claims.map((c: any) => ({ ...c, id: String(c.id) }));
+          const normalized = claimsRes.claims.map((c: Claim) => ({ ...c, id: String(c.id) }));
           setClaims(normalized);
 
           const allHistories: ClaimHistory[] = [];
           for (const claim of normalized) {
             const h = await claimHistoryService.getClaimHistoryById(token, claim.id);
-            if (h.success && h.history) allHistories.push(...h.history);
+            if (h.success && h.claimHistory) allHistories.push(...h.claimHistory);
           }
           setHistories(allHistories);
         }
 
         if (projectsRes.success && projectsRes.projects)
-          setProjects(projectsRes.projects.map((p: any) => ({ ...p, id: String(p.id) })));
+          setProjects(projectsRes.projects.map((p: Project) => ({ ...p, id: String(p.id) })));
 
         if (usersRes.success && usersRes.users) setUsers(usersRes.users);
       } catch (error) {
-        toast.error("Error cargando datos del dashboard");
+        void error;
+        toast.error("Error al cargar datos del dashboard. Intenta nuevamente.");
       }
     };
     void load();
-  }, [token]);
+  }, [token, logout]);
 
   const claimCounts = useMemo(() => {
     const total = claims.length;

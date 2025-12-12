@@ -149,11 +149,6 @@ class ClaimServiceMock implements IClaimService {
     void _token; // Evitar warning de variable no usada
     return { success: true, claims: CLAIMS };
   }  
-  async getClaimById(_token: string, claimId: string) {
-    const claim = CLAIMS.find((c) => c.id === claimId);
-    if (!claim) return { success: false, message: "Reclamo no encontrado (mock)" };
-    return { success: true, claim };
-  }  
   async createClaim(_token: string, claim: Partial<Claim>) {
     const newClaim: Claim = {
       id: (CLAIMS.length + 1).toString(),
@@ -183,8 +178,8 @@ class ClaimServiceMock implements IClaimService {
 
     return { success: true, claim: newClaim };
   }  
-  async updateClaimById(_token: string, claimId: string, claim: Partial<Claim>) {
-    const idx = CLAIMS.findIndex((c) => c.id === claimId);
+  async updateClaimById(_token: string, claim: Partial<Claim>) {
+    const idx = CLAIMS.findIndex((c) => c.id === claim.id);
     if (idx === -1) return { success: false, message: "Reclamo no encontrado (mock)" };
     const previous = CLAIMS[idx];
     const updated = { ...previous, ...claim } as Claim;
@@ -205,13 +200,7 @@ class ClaimServiceMock implements IClaimService {
     };
     appendClaimHistoryMock(historyEntry);
     return { success: true, claim: CLAIMS[idx] };
-  }  
-  async deleteClaimById(_token: string, claimId: string) {
-    const idx = CLAIMS.findIndex((c) => c.id === claimId);
-    if (idx === -1) return { success: false, message: "Reclamo no encontrado (mock)" };
-    CLAIMS.splice(idx, 1);
-    return { success: true };
-  }
+  } 
 }
 
 export const claimServiceMock = new ClaimServiceMock();

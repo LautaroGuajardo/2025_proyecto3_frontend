@@ -88,12 +88,12 @@ export default function Claims() {
     return String(item);
   };
 
-  const getPriorityValue = (p: any) => {
-    if (!p && p !== 0) return "";
-    if (typeof p === "string") return p;
-    if (p.name) return p.name;
-    if (p.value) return p.value;
-    return String(p);
+  const getPriorityValue = (priority: any) => {
+    if (!priority && priority !== 0) return "";
+    if (typeof priority === "string") return priority;
+    if (priority.name) return priority.name;
+    if (priority.value) return priority.value;
+    return String(priority);
   };
 
   useEffect(() => {
@@ -104,7 +104,6 @@ export default function Claims() {
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return claims.filter((c) => {
-      // apply status filter first
       if (statusFilter !== "all") {
         const statusLabel = String(getLabel(c.claimStatus)).toLowerCase();
         if (statusLabel !== String(statusFilter).toLowerCase()) return false;

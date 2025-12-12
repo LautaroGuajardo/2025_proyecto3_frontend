@@ -6,6 +6,6 @@ export type Project = {
   title: string;
   description: string;
   registrationDate: Date;
-  user: UserFormData;
+  user?: UserFormData;
   projectType: ProjectType;
 };

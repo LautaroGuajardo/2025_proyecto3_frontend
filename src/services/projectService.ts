@@ -32,71 +32,6 @@ class ProjectServiceReal implements IProjectService {
     }
   }
 
-  async getProjectsByUserId(
-    token: string,
-    userId: string
-  ): Promise<{ success: boolean; message?: string; projects?: Project[] }>{
-    try {
-      const response = await fetch(
-        apiEndpoints.projects.GET_PROJECTS_BY_USER_ID(userId),
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Error al obtener los proyectos del usuario");
-      }
-      const projects: Project[] = await response.json();
-      return {
-        success: true,
-        projects: projects,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message:
-          error instanceof Error
-            ? error.message
-            : "Error desconocido al obtener los proyectos del usuario",
-      };
-    }
-  }
-
-  async getProjectById(
-    token: string,
-    projectId: string
-  ): Promise<{ success: boolean; message?: string; project?: Project }>{
-    try {
-      const response = await fetch(
-        apiEndpoints.projects.GET_PROJECT(projectId),
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Error al obtener el proyecto");
-      }
-      const project: Project = await response.json();
-      return {
-        success: true,
-        project: project,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message:
-          error instanceof Error
-            ? error.message
-            : "Error desconocido al obtener el proyecto",
-      };
-    }
-  }
   async createProject(
     token: string,
     project: Partial<Project>
@@ -130,14 +65,13 @@ class ProjectServiceReal implements IProjectService {
   }
   async updateProjectById(
     token: string,
-    projectId: string,
     project: Partial<Project>
   ): Promise<{ success: boolean; message?: string; project?: Project }>{
     try {
       const response = await fetch(
-        apiEndpoints.projects.UPDATE_PROJECT(projectId),
+        apiEndpoints.projects.UPDATE_PROJECT(project.id?.toString() || ""),
         {
-          method: "PUT",
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,

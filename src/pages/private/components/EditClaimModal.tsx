@@ -262,7 +262,6 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         subarea: subareaName || undefined,
         claimStatus: statusId || claim.claimStatus,
         actions: actions || undefined,
-        // attachments no modificables en edición
       };
       const { success, message } = await claimService.updateClaimById(
         token,

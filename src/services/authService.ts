@@ -34,6 +34,11 @@ class AuthServiceReal implements IAuthService {
           refreshToken: string;
         };
         const { accessToken, refreshToken } = data;
+        return {
+          success: true,
+          accessToken,
+          refreshToken,
+        };
       }
       return {
         success: false,
@@ -42,7 +47,10 @@ class AuthServiceReal implements IAuthService {
     } catch (error) {
       return {
         success: false,
-        message: "Error al conectar con el servidor",
+        message:
+            error instanceof Error
+            ? error.message
+            : "Error al conectar con el servidor",
       };
     }
   }
@@ -72,7 +80,9 @@ class AuthServiceReal implements IAuthService {
     } catch (error) {
       return {
         success: false,
-        message: "Error al conectar con el servidor",
+        message: error instanceof Error
+            ? error.message
+            : "Error al conectar con el servidor",
       };
     }
   }
@@ -92,127 +102,12 @@ class AuthServiceReal implements IAuthService {
       }
       return { success: false, message: "Error al cerrar sesión" };
     } catch (error) {
-      return { success: false, message: "Error al cerrar sesión" };
-    }
-  }
-
-  async resetPassword(
-    email: string,
-    tokenPass: string,
-    newPassword: string,
-    confirmPassword: string
-  ): Promise<{ success: boolean; message?: string }> {
-    // ...existing code...
-    try {
-      const response = await fetch(
-        apiEndpoints.auth.RESET_PASSWORD(email, tokenPass),
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            password: newPassword,
-            password_confirm: confirmPassword,
-          }),
-        }
-      );
-      if (!response.ok) {
-        const errorData = await response.json();
-        return {
-          success: false,
-          message: errorData.message || "Error al restablecer la contraseña",
-        };
-      }
-      return {
-        success: true,
-        message: "Contraseña restablecida correctamente",
-      };
-    } catch (error) {
-      return { success: false, message: "Error al conectar con el servidor" };
-    }
-  }
-
-  async changePassword(
-    token: string,
-    email: string,
-    oldPassword: string,
-    newPassword: string,
-    confirmPassword: string
-  ): Promise<{ success: boolean; message?: string }> {
-    // ...existing code...
-    try {
-      const response = await fetch(apiEndpoints.auth.CHANGE_PASSWORD, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          email,
-          old_password: oldPassword,
-          new_password: newPassword,
-          password_confirm: confirmPassword,
-        }),
-      });
-      if (!response.ok) {
-        if (response.status === 400) {
-          return { success: false, message: "Contraseña actual incorrecta" };
-        }
-        const errorData = (await response.json()) as { message: string };
-        return {
-          success: false,
-          message: errorData.message || "Error al cambiar la contraseña",
-        };
-      }
-      return { success: true, message: "Contraseña cambiada correctamente" };
-    } catch (error) {
-      return { success: false, message: "Error al conectar con el servidor" };
-    }
-  }
-
-  async forgotPassword(
-    email: string
-  ): Promise<{ success: boolean; message?: string }> {
-    // ...existing code...
-    try {
-      const response = await fetch(apiEndpoints.auth.FORGOT_PASSWORD, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: `${email}`,
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        return {
-          success: false,
-          message:
-            errorData.message || "Error al enviar el correo de recuperación",
-        };
-      }
-      return {
-        success: true,
-        message: "Correo de recuperación enviado correctamente",
-      };
-    } catch (error) {
-      return { success: false, message: "Error al conectar con el servidor" };
-    }
-  }
-
-  async regenerateOtp(data: {
-    token: string;
-    email: string;
-  }): Promise<{ success: boolean; message?: string }> {
-    // ...existing code...
-    try {
-      const response = await fetch(
-        apiEndpoints.auth.REGENERATE_OTP(data.email),
-        {
-          method: "GET",
-          headers: { Authorization: `Bearer ${data.token}` },
-        }
-      );
-      if (!response.ok) throw new Error("Error al regenerar OTP");
-      return { success: true, message: "OTP regenerado correctamente" };
-    } catch (error) {
-      return { success: false, message: "Error al regenerar OTP" };
+      return { 
+        success: false, 
+        message: 
+          error instanceof Error
+            ? error.message
+            : "Error al cerrar sesión" };
     }
   }
 }
