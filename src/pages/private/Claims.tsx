@@ -34,6 +34,7 @@ import { Priority } from "@/types/Priority";
 import EditClaimModal from "@/pages/private/components/EditClaimModal";
 import MoreDetailsButton from "@/components/common/MoreDetailsButton";
 import { useNavigate } from "react-router-dom";
+import MessageModal from "@/pages/private/components/MessageModal";
 
 export default function Claims() {
   const { logout, getAccessToken, role } = useAuth();
@@ -41,6 +42,7 @@ export default function Claims() {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [messageModalOpen, setMessageModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [loading, setLoading] = useState(false);
@@ -243,6 +245,16 @@ export default function Claims() {
                               }}
                             />
                           )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedClaim(claim);
+                              setMessageModalOpen(true);
+                            }}
+                          >
+                            Mensajes
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
@@ -296,6 +308,14 @@ export default function Claims() {
           onSaved={async () => {
             void fetchClaims();
           }}
+        />
+      )}
+
+      {messageModalOpen && (
+        <MessageModal
+          open={messageModalOpen}
+          onOpenChange={setMessageModalOpen}
+          claimId={selectedClaim ? String(selectedClaim.id) : null}
         />
       )}
     </>
