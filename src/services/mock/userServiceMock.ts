@@ -45,6 +45,10 @@ export const USERS = [
   },
 ];
 
+export const appendUserMock = (entry: User) => {
+  USERS.push(entry);
+};
+
 class UserServiceMock implements IUserService {
   updateUserProfile(
     _token: string,

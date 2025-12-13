@@ -22,9 +22,11 @@ import { Label } from "@/components/ui/label";
 import { z } from "zod";
 
 import { userService } from "@/services/factories/userServiceFactory";
-import { authService } from "@/services/factories/authServiceFactory";
+import { createUserService } from "@/services/factories/createUserServiceFactory";
 const { updateUserByEmail } = userService;
-const { register: registerService } = authService;
+const { createUser } = createUserService;
+import type { User } from "@/types/User";
+import { Role } from "@/types/Role";
 
 import useAuth from "@/hooks/useAuth";
 
@@ -152,17 +154,17 @@ export default function EditUserModal({
         }
 
         setLoading(true);
-        const payload = {
+        const userToCreate: User = {
+          id: String(Date.now()),
           firstName: parsed.data.firstName,
           lastName: parsed.data.lastName,
           email: parsed.data.email,
           password: parsed.data.password,
+          role: (form.role as Role) ?? Role.USER,
           phone: parsed.data.phone,
-        } as RegisterFormDto;
+        };
 
-        console.log("Payload registro:", payload);
-
-        const { success, message } = await registerService(payload);
+        const { success, message } = await createUser(userToCreate);
         setLoading(false);
 
         if (!success) {

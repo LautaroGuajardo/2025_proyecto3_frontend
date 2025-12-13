@@ -271,7 +271,6 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
     }
     else {
       const parsed = claimSchema.safeParse({
-        claimId,
         description: description || undefined,
         claimType: claimTypeId,
         criticality: criticalityId,
@@ -367,26 +366,27 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
                 )}
               </div>
 
-              <div className="flex gap-1 flex-col">
-                <div className="flex w-full">
-                  <Label htmlFor="claimId" className="text-nowrap text-gray-500 w-2/5">
-                    Código*
-                  </Label>
-                  <Input
-                    required
-                    id="claimId" 
-                    name="claimId" 
-                    value={claimId} 
-                    onChange={(e)=>setClaimId(e.target.value)} 
-                    disabled={isEdit || esResuelto}
-                    className="w-3/5" />
+              {isEdit && (
+                <div className="flex gap-1 flex-col">
+                  <div className="flex w-full">
+                    <Label htmlFor="claimId" className="text-nowrap text-gray-500 w-2/5">
+                      Código*
+                    </Label>
+                    <Input
+                      id="claimId"
+                      name="claimId"
+                      value={claimId}
+                      onChange={(e) => setClaimId(e.target.value)}
+                      disabled={true}
+                      className="w-3/5" />
+                  </div>
+                  <div className="w-3/5 ml-auto">
+                    {errors.claimId && (
+                      <p className="text-sm text-start text-red-500">{errors.claimId}</p>
+                    )}
+                  </div>
                 </div>
-                <div className="w-3/5 ml-auto">
-                  {errors.claimId && (
-                    <p className="text-sm text-start text-red-500">{errors.claimId}</p>
-                  )}
-                </div>
-              </div>
+              )}
 
               <div className="flex gap-1 flex-col">
                 <div className="flex w-full">

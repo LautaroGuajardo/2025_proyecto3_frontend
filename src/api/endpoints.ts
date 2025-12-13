@@ -9,6 +9,10 @@ export const API_ENDPOINTS = {
     VALIDATE_TOKEN: "/auth/validate-token",
   },
 
+  create_user: {
+    REGISTER: "/create-user/",
+  },
+
   projects: {
     GET_ALL: "/projects",
     CREATE_PROJECT: "/projects",

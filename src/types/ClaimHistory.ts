@@ -1,16 +1,18 @@
 import type { ClaimStatus } from "./ClaimStatus";
-import type { ClaimType } from "./ClaimType";
+import type { Criticality } from "./Criticality";
+import type { Priority } from "./Priority";
 import type { UserFormData } from "./User";
 
 export interface ClaimHistory {
   id: string;
   claimId: string;
   claimStatus: ClaimStatus;
-  claimType: ClaimType;
-  action: string;
+  criticality: Criticality;
+  priority: Priority;
+  action?: string;
   user?: UserFormData;
-  area: string;
-  subarea: string;
+  area?: string;
+  subarea?: string;
   startDateHour: Date;
   endDateHour?: Date;
 }
