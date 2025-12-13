@@ -24,10 +24,7 @@ export const API_ENDPOINTS = {
     SEND_MESSAGE: (id: string) => `/claims/${id}/message`,
     GET_MESSAGES_BY_CLAIM_ID: (claimId: string) => `/claims/${claimId}/messages`,
   },
-
-  subareas: {
-    GET_ALL: "/sub-areas",
-  },
+  
 
   claims: {
     GET_ALL: "/claims",
@@ -38,7 +35,7 @@ export const API_ENDPOINTS = {
 
   users: {
     GET_ALL: "/users",
-    GET_PROFILE: "/usuarios/profile",
+    GET_PROFILE: "/users/profile",
     GET_USER_BY_EMAIL: (email: string) =>
       `/users/${encodeURIComponent(email)}`,
     UPDATE_USER_PROFILE: `/users/profile`,

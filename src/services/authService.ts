@@ -56,9 +56,9 @@ class AuthServiceReal implements IAuthService {
   }
 
   async register(
-    data: Omit<RegisterFormDto, "confirmPassword">
+    data: RegisterFormDto
   ): Promise<{ success: boolean; message?: string }> {
-    // ...existing code...
+    console.log("Register data:", data);
     try {
       const requestBody: Partial<RegisterFormDto> = { ...data };
       const response = await fetch(apiEndpoints.auth.REGISTER, {

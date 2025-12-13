@@ -119,18 +119,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const register = async ({
-    firstName,
-    lastName,
-    email,
-    password,
-  }: Omit<RegisterFormDto, "confirmPassword">): Promise<void> => {
-    const { success, message } = await registerService({
-      firstName,
-      lastName,
-      email,
-      password,
-    });
+  const register = async (data: RegisterFormDto): Promise<void> => {
+    const { success, message } = await registerService(data);
 
     if (!success) {
       toast.error(message || "Error al iniciar sesión");

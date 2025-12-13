@@ -6,7 +6,6 @@ import type { Project } from "./Project";
 
 export interface Claim {
   id: string;
-  claimCode: string;
   claimStatus?: ClaimStatus;
   description: string;
   claimType: ClaimType;
