@@ -14,6 +14,6 @@ export interface IProjectService {
   ): Promise<{ success: boolean; message?: string; project?: Project }>;
   deleteProjectById(
     token: string,
-    projectId: string
+    project: string
   ): Promise<{ success: boolean; message?: string }>;
 }

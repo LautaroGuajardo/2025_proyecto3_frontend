@@ -7,11 +7,11 @@ import { Criticality } from "@/types/Criticality";
 
 const CLAIM_HISTORY: ClaimHistory[] = [
   {
-    id: "1",
+    _id: "1",
     claimId: "1",
-    priority: Priority.ALTA,
-    criticality: Criticality.MEDIA,
-    claimStatus: ClaimStatus.PENDIENTE,
+    priority: Priority.HIGH,
+    criticality: Criticality.MAJOR,
+    claimStatus: ClaimStatus.PENDING,
     action: "",
     user: USERS[2],
     area: "Infraestructura",
@@ -20,11 +20,11 @@ const CLAIM_HISTORY: ClaimHistory[] = [
     endDateHour: new Date(2025,2,12,10,55,15)
   },
   {
-    id: "2",
+    _id: "2",
     claimId: "1",
-    priority: Priority.ALTA,
-    criticality: Criticality.MEDIA,
-    claimStatus: ClaimStatus.PROGRESO,
+    priority: Priority.HIGH,
+    criticality: Criticality.MAJOR,
+    claimStatus: ClaimStatus.IN_PROGRESS,
     action: "",
     area: "Infraestructura",
     subarea: "Redes",
@@ -33,11 +33,11 @@ const CLAIM_HISTORY: ClaimHistory[] = [
     endDateHour: new Date(2025,3,13,12,30,15)
   },
   {
-    id: "3",
+    _id: "3",
     claimId: "1",
-    priority: Priority.ALTA,
-    criticality: Criticality.MEDIA,
-    claimStatus: ClaimStatus.PROGRESO,
+    priority: Priority.HIGH,
+    criticality: Criticality.MAJOR,
+    claimStatus: ClaimStatus.IN_PROGRESS,
     action: "",
     area: "Infraestructura",
     subarea: "Redes",
@@ -46,11 +46,11 @@ const CLAIM_HISTORY: ClaimHistory[] = [
     endDateHour: new Date(2025,4,14,18,40,15)
   },
   {
-    id: "4",
+    _id: "4",
     claimId: "1",
-    priority: Priority.ALTA,
-    criticality: Criticality.MEDIA,
-    claimStatus: ClaimStatus.PROGRESO,
+    priority: Priority.HIGH,
+    criticality: Criticality.MAJOR,
+    claimStatus: ClaimStatus.IN_PROGRESS,
     action: "",
     area: "Infraestructura",
     subarea: "Redes",
@@ -59,11 +59,11 @@ const CLAIM_HISTORY: ClaimHistory[] = [
     endDateHour: new Date(2025,5,15,20,50,15)
   },
   {
-    id: "5",
+    _id: "5",
     claimId: "1",
-    priority: Priority.ALTA,
-    criticality: Criticality.MEDIA,
-    claimStatus: ClaimStatus.PENDIENTE,
+    priority: Priority.HIGH,
+    criticality: Criticality.MAJOR,
+    claimStatus: ClaimStatus.PENDING,
     action: "",
     area: "Infraestructura",
     subarea: "Redes",
@@ -72,11 +72,11 @@ const CLAIM_HISTORY: ClaimHistory[] = [
     endDateHour: new Date(2025,6,16,22,0,15)
   },
   {
-    id: "6",
+    _id: "6",
     claimId: "1",
-    priority: Priority.ALTA,
-    criticality: Criticality.MEDIA,
-    claimStatus: ClaimStatus.PENDIENTE,
+    priority: Priority.HIGH,
+    criticality: Criticality.MAJOR,
+    claimStatus: ClaimStatus.PENDING,
     action: "",
     area: "Infraestructura",
     subarea: "Redes",

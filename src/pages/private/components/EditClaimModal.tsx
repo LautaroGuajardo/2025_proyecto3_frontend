@@ -17,7 +17,7 @@ import { z } from "zod";
 
 import type { Claim } from "@/types/Claim";
 import type { Project } from "@/types/Project";
-import type { Area, AreaFormData } from "@/types/Area";
+import type { Area } from "@/types/Area";
 import { Role } from "@/types/Role";
 import { ClaimType } from "@/types/ClaimType";
 import { Criticality } from "@/types/Criticality";
@@ -27,6 +27,7 @@ import useAuth from "@/hooks/useAuth";
 import { claimService } from "@/services/factories/claimServiceFactory";
 import { projectService } from "@/services/factories/projectServiceFactory";
 import { areaService } from "@/services/factories/areaServiceFactory";
+import type { Subarea } from "@/types/Subarea";
 
 type Props = {
   open: boolean;
@@ -36,7 +37,7 @@ type Props = {
 };
 
 export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: Props) {
-  const isEdit = Boolean(claim && claim.id);
+  const isEdit = Boolean(claim && claim._id);
   const { getAccessToken, role } = useAuth();
   const token = getAccessToken();
 
@@ -48,10 +49,11 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
   const [criticalityId, setCriticalityId] = useState("");
   const [priorityId, setPriorityId] = useState("");
   const [statusId, setStatusId] = useState("");
-  const [projectId, setProjectId] = useState("");
+  const [project, setProject] = useState("");
   const [selectedAreaId, setSelectedAreaId] = useState("");
   const [areaName, setAreaName] = useState("");
   const [subareaName, setSubareaName] = useState("");
+  const [selectedSubareaId, setSelectedSubareaId] = useState("");
   const [actions, setActions] = useState("");
   const isCustomer = role === Role.CUSTOMER;
 
@@ -74,7 +76,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
     claimType: z.string().min(1, "El tipo es obligatorio"),
     criticality: z.string().min(1, "La criticidad es obligatoria"),
     priority: z.string().min(1, "La prioridad es obligatoria"),
-    projectId: z.string().min(1, "El proyecto es obligatorio"),
+    project: z.string().min(1, "El proyecto es obligatorio"),
     area: z.string().optional(),
     subarea: z.string().optional(),
     claimStatus: z.string().optional(),
@@ -89,7 +91,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         areaService.getAllAreas(token),
       ]);
 
-      if (projRes.success && projRes.projects) setProjects(projRes.projects.map((c)=> ({...c, id: String((c).id)})));
+      if (projRes.success && projRes.projects) setProjects(projRes.projects.map((c)=> ({...c, id: String((c)._id)})));
       if (areasRes.success && areasRes.areas) setAreas(areasRes.areas);
     };
     void load();
@@ -98,35 +100,69 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
 
   useEffect(() => {
     if (claim) {
-      const editing = Boolean(claim.id);
+      const editing = Boolean(claim._id);
       if (editing) {
-        setClaimId(claim.id || "");
+        setClaimId(claim._id || "");
         setDescription(claim.description || "");
         setClaimTypeId(String((claim.claimType) ?? claim.claimType ?? ""));
         setCriticalityId(String((claim.criticality) ?? claim.criticality ?? ""));
         setPriorityId(String((claim.priority) ?? claim.priority ?? ""));
         setStatusId(String(claim.claimStatus ?? ""));
-        setProjectId(String((claim.project)?.id ?? ""));
+        setProject(String((claim.project)?._id ?? ""));
         // Siempre dejar el campo 'actions' vacío al abrir el modal,
         // porque debe ser completado cada vez que se haga un cambio.
         setActions("");
         
-        const claimAreaStr = typeof claim.area === 'string'
-          ? claim.area //si el area es string
-          : claim.area && typeof claim.area === 'object' && 'name' in claim.area
-            ? (claim.area as AreaFormData).name //si el area es objeto
-            : ""; //si el area es null o undefined
-        const claimSubareaStr = typeof claim.subarea === 'string'
-          ? claim.subarea
-          : claim.subarea && typeof claim.subarea === 'object' && 'name' in claim.subarea
-            ? (claim.subarea as AreaFormData).name
-            : "";
-        setAreaName(claimAreaStr);
-        setSubareaName(claimSubareaStr);
-        
-        if (claimAreaStr) {
+        // runtime type guards to avoid unsafe casting
+        const isObject = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object";
+        const hasName = (v: unknown): v is { name: unknown } => isObject(v) && "name" in v;
+
+        if (typeof claim.area === "string") {
+          // si el area viene como string (antiguo) lo tratamos como nombre
+          const claimAreaStr = claim.area;
+          setAreaName(claimAreaStr);
           const foundArea = areas.find(a => a.name === claimAreaStr);
-          if (foundArea) setSelectedAreaId(foundArea.id);
+          if (foundArea) {
+            setSelectedAreaId(foundArea._id);
+          } else {
+            setSelectedAreaId("");
+          }
+        } else if (isObject(claim.area)) {
+          const areaObj = claim.area as Record<string, unknown>;
+          // preferimos el _id cuando esté disponible
+          if ("_id" in areaObj && areaObj._id) {
+            setSelectedAreaId(String(areaObj._id));
+          } else {
+            setSelectedAreaId("");
+          }
+          if ("name" in areaObj && typeof areaObj.name === "string") {
+            setAreaName(areaObj.name as string);
+          } else {
+            setAreaName("");
+          }
+
+          const sub = areaObj.subarea;
+          if (typeof sub === "string") {
+            setSubareaName(sub);
+            // try to find subarea id by name
+            const found = areas
+              .find(a => String(a._id) === String(areaObj._id))
+              ?.subareas?.find((s: Subarea) => s.name === sub);
+            setSelectedSubareaId(found?._id || "");
+          } else if (isObject(sub)) {
+            const subObj = sub as Record<string, unknown>;
+            if ("_id" in subObj && subObj._id) setSelectedSubareaId(String(subObj._id));
+            if ("name" in subObj && typeof subObj.name === "string") setSubareaName(subObj.name as string);
+          } else {
+            setSubareaName("");
+            setSelectedSubareaId("");
+          }
+        } else {
+          // no area
+          setAreaName("");
+          setSubareaName("");
+          setSelectedAreaId("");
+          setSelectedSubareaId("");
         }
       } else {
         setDescription("");
@@ -134,7 +170,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         setCriticalityId("");
         setPriorityId("");
         setStatusId("");
-        setProjectId(String((claim).project?.id ?? ""));
+        setProject(String((claim).project?._id ?? ""));
         setSelectedAreaId("");
         setAreaName("");
         setSubareaName("");
@@ -145,7 +181,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
       setClaimTypeId("");
       setCriticalityId("");
       setPriorityId("");
-      setProjectId("");
+      setProject("");
       setSelectedAreaId("");
       setAreaName("");
       setSubareaName("");
@@ -178,7 +214,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
 
   const handleAreaChange = (areaId: string) => {
     setSelectedAreaId(areaId);
-    const selectedArea = areas.find(a => a.id === areaId);
+    const selectedArea = areas.find(a => a._id === areaId);
     if (selectedArea) {
       setAreaName(selectedArea.name);
       setSubareaName("");
@@ -186,28 +222,35 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
   };
 
   const handleSubareaChange = (subareaId: string) => {
-    const selectedArea = areas.find(a => a.id === selectedAreaId);
+    const selectedArea = areas.find(a => a._id === selectedAreaId);
     if (selectedArea) {
-      const selectedSubarea = selectedArea.subareas?.find((s: any) => s.id === subareaId);
+      const selectedSubarea = selectedArea.subareas?.find((s: Subarea) => s._id === subareaId);
       if (selectedSubarea) {
         setSubareaName(selectedSubarea.name);
+        setSelectedSubareaId(selectedSubarea._id);
+      } else {
+        setSubareaName("");
+        setSelectedSubareaId("");
       }
+    } else {
+      setSubareaName("");
+      setSelectedSubareaId("");
     }
   };
 
   const filteredSubareas = selectedAreaId
-    ? areas.find(a => a.id === selectedAreaId)?.subareas || []
+    ? areas.find(a => a._id === selectedAreaId)?.subareas || []
     : [];
 
   const estadoActual = claim?.claimStatus;
   const allowedStatuses = React.useMemo(() => {
     if (!isEdit) return statuses;
-    if (estadoActual === ClaimStatus.RESUELTO) return [ClaimStatus.RESUELTO];
-    if (estadoActual === ClaimStatus.PROGRESO) return [ClaimStatus.PROGRESO, ClaimStatus.RESUELTO];
+    if (estadoActual === ClaimStatus.RESOLVED) return [ClaimStatus.RESOLVED];
+    if (estadoActual === ClaimStatus.IN_PROGRESS) return [ClaimStatus.IN_PROGRESS, ClaimStatus.RESOLVED];
     return statuses;
   }, [estadoActual, isEdit, statuses]);
 
-  const esResuelto = isEdit && estadoActual === ClaimStatus.RESUELTO;
+  const esResuelto = isEdit && estadoActual === ClaimStatus.RESOLVED;
 
   const handleSave = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -232,12 +275,12 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
   try {
     if (isEdit && claim) {
       const parsed = claimSchema.safeParse({
-        id: String(claim.id),
+        id: String(claim._id),
         description: description || undefined,
         claimType: claimTypeId,
         criticality: criticalityId,
         priority: priorityId,
-        projectId,
+        project,
         area: areaName || undefined,
         subarea: subareaName || undefined,
         claimStatus: statusId || claim.claimStatus,
@@ -251,11 +294,15 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         setErrors(fieldErrors);
         return;
       }
+      // remove `id` and `area` from parsed data before sending
+      const { id: _dropId, area: _dropArea, ...cleaned } = parsed.data as any;
       const toSave: Partial<Claim> = {
-        ...parsed.data,
-        project: projects.find((p) => String(p.id) === projectId),
-        area: areaName || undefined,
-        subarea: subareaName || undefined,
+        ...cleaned,
+        _id: claim._id,
+        // backend expects `project` as id string
+        project: project,
+        // backend expects `subarea` as id (do NOT send `area`)
+        subarea: selectedSubareaId || undefined,
         claimStatus: statusId || claim.claimStatus,
         actions: actions || undefined,
       };
@@ -275,10 +322,10 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         claimType: claimTypeId,
         criticality: criticalityId,
         priority: priorityId,
-        projectId,
+        project,
         area: areaName || undefined,
         subarea: subareaName || undefined,
-        claimStatus: statusId || ClaimStatus.PENDIENTE,
+        claimStatus: statusId || ClaimStatus.PENDING,
         actions: actions || undefined,
       });
 
@@ -291,12 +338,15 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         return;
       }
 
+      // remove `id` and `area` from parsed data before sending
+      const { id: _dropId2, area: _dropArea2, ...cleanedCreate } = parsed.data as any;
       const toSave: Partial<Claim> = {
-        ...parsed.data,
-        project: projects.find((p) => String(p.id) === projectId),
-        area: areaName || undefined,
-        subarea: subareaName || undefined,
-        claimStatus: statusId || ClaimStatus.PENDIENTE,
+        ...cleanedCreate,
+        // backend expects `project` as id string
+        project: project,
+        // backend expects `subarea` as id (do NOT send `area`)
+        subarea: selectedSubareaId || undefined,
+        claimStatus: statusId || ClaimStatus.PENDING,
         actions: actions || undefined,
         attachments: files.length ? files : undefined,
       };
@@ -317,7 +367,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
     if (typeof onSaved === "function") onSaved();
     onOpenChange(false);
 
-  } catch (err: any) {
+  } catch (err) {
     toast.error(err?.message || "Error inesperado");
   } finally {
     setLoading(false);
@@ -351,18 +401,18 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
                 <Label className="text-nowrap text-gray-500 w-2/5">
                   Proyecto
                 </Label>
-                <Select value={projectId} onValueChange={(v)=>setProjectId(v)} disabled={isEdit || esResuelto}>
+                <Select value={project} onValueChange={(v)=>setProject(v)} disabled={isEdit || esResuelto}>
                   <SelectTrigger className="w-3/5">
                     <SelectValue placeholder="Seleccione una opcion"/>
                   </SelectTrigger>
                   <SelectContent>
-                    {projects.map((p)=> (<SelectItem key={p.id} value={String(p.id)}>{p.title || `#${p.id}`}</SelectItem>))}
+                    {projects.map((p)=> (<SelectItem key={p._id} value={String(p._id)}>{p.title || `#${p._id}`}</SelectItem>))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="w-3/5 ml-auto">
-                {errors.projectId && (
-                  <p className="text-sm text-start text-red-500">{errors.projectId}</p>
+                {errors.project && (
+                  <p className="text-sm text-start text-red-500">{errors.project}</p>
                 )}
               </div>
 
@@ -523,7 +573,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
                         <SelectValue placeholder="Seleccione un área"/>
                       </SelectTrigger>
                       <SelectContent>
-                        {areas.map((area)=> (<SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>))}
+                        {areas.map((area)=> (<SelectItem key={area._id} value={area._id}>{area.name}</SelectItem>))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -538,13 +588,13 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
                       Subárea
                     </Label>
                     <Select
-                      value={filteredSubareas.find((s: any) => s.name === subareaName)?.id || ""}
+                      value={selectedSubareaId}
                       onValueChange={handleSubareaChange}
                       disabled={!selectedAreaId || esResuelto}
                     >
                       <SelectTrigger className="w-3/5"><SelectValue placeholder="Seleccione una subárea"/></SelectTrigger>
                       <SelectContent>
-                        {filteredSubareas.map((s: any)=> (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
+                        {filteredSubareas.map((s: Subarea)=> (<SelectItem key={s._id} value={s._id}>{s.name}</SelectItem>))}
                       </SelectContent>
                     </Select>
                   </div>

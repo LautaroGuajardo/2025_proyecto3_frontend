@@ -35,7 +35,7 @@ class AuthServiceMock implements IAuthService {
     }
 
     const newUser: UserWithPassword = {
-      id: (USERS.length + 1).toString(),
+      _id: (USERS.length + 1).toString(),
       email: data.email,
       firstName: data.firstName,
       lastName: data.lastName,

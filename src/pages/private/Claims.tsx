@@ -111,10 +111,10 @@ export default function Claims() {
 
       if (!q) return true;
       return (
-        ((c.id || "").toLowerCase().includes(q)) ||
+        ((c._id || "").toLowerCase().includes(q)) ||
         (c.description || "").toLowerCase().includes(q) ||
         (c.claimType || "").toLowerCase().includes(q) ||
-        (c.area || "").toLowerCase().includes(q)
+        (c.area?.name || "").toLowerCase().includes(q)
       );
     });
   }, [claims, search, statusFilter]);
@@ -202,21 +202,21 @@ export default function Claims() {
                     </TableRow>
                   ) : (
                     paginated.map((claim: Claim) => (
-                      <TableRow key={claim.id}>
-                        <TableCell>{claim.id}</TableCell>
+                      <TableRow key={claim._id}>
+                        <TableCell>{claim._id}</TableCell>
                         <TableCell>{claim.description}</TableCell>
                         <TableCell>{getLabel(claim.claimType)}</TableCell>
                         <TableCell>{getLabel(claim.criticality)}</TableCell>
                         <TableCell>
                           <span
                             className={`inline-block px-2 py-1 rounded-full text-sm font-medium ${
-                              getPriorityValue(claim.priority) === Priority.BAJA
+                              getPriorityValue(claim.priority) === Priority.LOW
                                 ? "bg-yellow-100 text-yellow-800"
-                                : getPriorityValue(claim.priority) === Priority.MEDIA
+                                : getPriorityValue(claim.priority) === Priority.MEDIUM
                                 ? "bg-orange-100 text-orange-800"
-                                : getPriorityValue(claim.priority) === Priority.ALTA
+                                : getPriorityValue(claim.priority) === Priority.HIGH
                                 ? "bg-red-100 text-red-800"
-                                : getPriorityValue(claim.priority) === Priority.URGENTE
+                                : getPriorityValue(claim.priority) === Priority.URGENT
                                 ? "bg-rose-800 text-white"
                                 : "bg-gray-100 text-gray-800"
                             }
@@ -226,17 +226,17 @@ export default function Claims() {
                           </span>
                         </TableCell>
                         <TableCell>{getLabel(claim.claimStatus)}</TableCell>
-                        {!isCustomer && <TableCell>{claim.subarea ?? "-"}</TableCell>}
-                        <TableCell>{claim.area}</TableCell>
+                        {!isCustomer && <TableCell>{claim.area?.subarea?.name ?? "-"}</TableCell>}
+                        <TableCell>{claim.area?.name ?? "-"}</TableCell>
                         <TableCell className="text-center space-x-2">
                           <MoreDetailsButton
                             handleViewDetails={() => {
-                              if (claim && claim.id) {
-                                navigate(`/claims/${claim.id}`);
+                              if (claim && claim._id) {
+                                navigate(`/claims/${claim._id}`);
                               }
                             }}
                           />
-                          {role !== Role.CUSTOMER && (
+                          {(role == Role.USER) && (
                             <EditButton
                               handleEdit={() => {
                                 setSelectedClaim(claim);
@@ -314,7 +314,7 @@ export default function Claims() {
         <MessageModal
           open={messageModalOpen}
           onOpenChange={setMessageModalOpen}
-          claimId={selectedClaim ? String(selectedClaim.id) : null}
+          claimId={selectedClaim ? String(selectedClaim._id) : null}
         />
       )}
     </>

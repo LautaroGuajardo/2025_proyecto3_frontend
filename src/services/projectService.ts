@@ -69,7 +69,7 @@ class ProjectServiceReal implements IProjectService {
   ): Promise<{ success: boolean; message?: string; project?: Project }>{
     try {
       const response = await fetch(
-        apiEndpoints.projects.UPDATE_PROJECT(project.id?.toString() || ""),
+        apiEndpoints.projects.UPDATE_PROJECT(project._id?.toString() || ""),
         {
           method: "PATCH",
           headers: {
@@ -100,11 +100,11 @@ class ProjectServiceReal implements IProjectService {
 
   async deleteProjectById(
     token: string,
-    projectId: string
+    project: string
   ): Promise<{ success: boolean; message?: string }>{
     try {
       const response = await fetch(
-        apiEndpoints.projects.DELETE_PROJECT(projectId),
+        apiEndpoints.projects.DELETE_PROJECT(project),
         {
           method: "DELETE",
           headers: {

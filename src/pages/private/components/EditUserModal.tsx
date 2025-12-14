@@ -31,7 +31,6 @@ import { Role } from "@/types/Role";
 import useAuth from "@/hooks/useAuth";
 
 import type { UserFormData } from "@/types/User";
-import type { RegisterFormDto } from "@/dto/RegisterFormDto";
 import ShowPasswordIcon from "@/components/common/ShowPasswordIcon";
 
 type Props = {
@@ -155,7 +154,7 @@ export default function EditUserModal({
 
         setLoading(true);
         const userToCreate: User = {
-          id: String(Date.now()),
+          _id: String(Date.now()),
           firstName: parsed.data.firstName,
           lastName: parsed.data.lastName,
           email: parsed.data.email,

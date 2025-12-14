@@ -30,11 +30,11 @@ export default function EditProjectModal({
   projectTypes = [],
 }: Props) {
   const isEdit = project !== null;
-  const [form, setForm] = useState({ id: "", title: "", description: "", projectType: "" });
-  const { id, title, description, projectType } = form;
+  const [form, setForm] = useState({ _id: "", title: "", description: "", projectType: "" });
+  const { _id, title, description, projectType } = form;
 
   const projectSchema = z.object({
-    id: z.string().optional(),
+    _id: z.string().optional(),
     title: z.string().min(1, "El título es obligatorio"),
     description: z.string().optional(),
     projectType: z.string().nonempty("El tipo de proyecto es obligatorio"),
@@ -47,7 +47,7 @@ export default function EditProjectModal({
   useEffect(() => {
     if (isEdit && project) {
       setForm({
-        id: project.id,
+        _id: project._id,
         title: project.title,
         description: project.description || "",
         projectType:
@@ -56,7 +56,7 @@ export default function EditProjectModal({
             : project.projectType,
       });
     } else {
-      setForm({ id: "", title: "", description: "", projectType: "" });
+      setForm({ _id: "", title: "", description: "", projectType: "" });
     }
   }, [isEdit, project]);
 
@@ -79,7 +79,7 @@ export default function EditProjectModal({
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     const payload = isEdit
-      ? { id: String(id), title, description, projectType }
+      ? { _id: String(_id), title, description, projectType }
       : { title, description, projectType };
     const parsed = projectSchema.safeParse(payload);
     if (!parsed.success) {

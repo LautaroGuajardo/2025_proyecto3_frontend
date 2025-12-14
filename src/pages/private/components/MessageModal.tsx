@@ -74,7 +74,7 @@ export default function MessageModal({ open, onOpenChange, claimId }: Props) {
     }
     setLoading(true);
     const payload: Message = {
-      id: "", // lo asigna el backend
+      _id: "", // lo asigna el backend
       claimId,
       name,
       lastname,
@@ -132,7 +132,7 @@ export default function MessageModal({ open, onOpenChange, claimId }: Props) {
             <p className="text-sm text-muted-foreground">No hay mensajes.</p>
           ) : (
             filtered.map((m) => (
-              <div key={m.id} className="border rounded-md p-3">
+              <div key={m._id} className="border rounded-md p-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-semibold">{m.name} {m.lastname}</div>
                   <div className="text-xs text-muted-foreground">{new Date(m.timestamp).toLocaleString()}</div>
