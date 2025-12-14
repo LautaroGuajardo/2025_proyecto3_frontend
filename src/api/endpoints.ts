@@ -39,7 +39,7 @@ export const API_ENDPOINTS = {
 
   users: {
     GET_ALL: "/users",
-    GET_PROFILE: "/users/profile",
+    GET_PROFILE: "/auth/me",
     GET_USER_BY_EMAIL: (email: string) =>
       `/users/${encodeURIComponent(email)}`,
     UPDATE_USER_PROFILE: `/users/profile`,
