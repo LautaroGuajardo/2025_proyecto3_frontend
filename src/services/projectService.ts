@@ -69,7 +69,7 @@ class ProjectServiceReal implements IProjectService {
   ): Promise<{ success: boolean; message?: string; project?: Project }>{
     try {
       const response = await fetch(
-        apiEndpoints.projects.UPDATE_PROJECT(project.id?.toString() || ""),
+        apiEndpoints.projects.UPDATE_PROJECT(project._id?.toString() || ""),
         {
           method: "PATCH",
           headers: {

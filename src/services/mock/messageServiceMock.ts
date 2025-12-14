@@ -3,7 +3,7 @@ import type { IMessageService } from "../interfaces/IMessageService";
 
 export const MESSAGES: Message[] = [
   {
-    id: "1",
+    _id: "1",
     claimId: "1",
     name: "Juan",
     lastname: "Perez",
@@ -12,7 +12,7 @@ export const MESSAGES: Message[] = [
     state: "PUBLICO",
   },
   {
-    id: "2",
+    _id: "2",
     claimId: "1",
     name: "Soporte",
     lastname: "Tecnico",
@@ -27,17 +27,17 @@ class MessageServiceMock implements IMessageService {
     token: string,
     message: Message,
   ): Promise<{ success: boolean; message: Message }> {
-    MESSAGES.push({...message, id: (MESSAGES.length + 1).toString() });
+    MESSAGES.push({...message, _id: (MESSAGES.length + 1).toString() });
     return {
       success: true,
       message: {
         ...message,
-        id: "mocked-message-id",
+        _id: "mocked-message-id",
         timestamp: new Date(),
       },
     };
   }
- 
+
   async getMessagesByClaimId(
     token: string,
     claimId: string

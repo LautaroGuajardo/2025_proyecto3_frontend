@@ -117,7 +117,8 @@ export default function Project() {
         success,
         message,
         project: updatedProject,
-      } = await projectService.updateProjectById(token, project.id, {
+      } = await projectService.updateProjectById(token, {
+        _id: project._id,
         title: project.title,
         description: project.description,
         projectType: project.projectType,
@@ -127,7 +128,7 @@ export default function Project() {
         return;
       }
       setProjects((pj) =>
-        pj.map((pjselected) => (pjselected.id === updatedProject?.id ? updatedProject : pjselected))
+        pj.map((pjselected) => (pjselected._id === updatedProject?._id ? updatedProject : pjselected))
       );
       toast.success("Proyecto actualizado");
     }
@@ -149,7 +150,7 @@ export default function Project() {
       toast.error(message || "No se pudo eliminar el proyecto.");
       return;
     }
-    setProjects((pj) => pj.filter((pjselected) => pjselected.id !== id));
+    setProjects((pj) => pj.filter((pjselected) => pjselected._id !== id));
     toast.success("Proyecto eliminado");
   };
 
@@ -159,7 +160,7 @@ export default function Project() {
     return (
       pjselected.title.toLowerCase().includes(q) ||
       (pjselected.description || "").toLowerCase().includes(q) ||
-      pjselected.id.includes(q)
+      pjselected._id.includes(q)
     );
   });
 
@@ -241,6 +242,7 @@ export default function Project() {
                   <TableRow>
                     <TableHead className="text-gray-400">ID</TableHead>
                     <TableHead className="text-gray-400">Titulo</TableHead>
+                    <TableHead className="text-gray-400">Fecha de Creación</TableHead>
                     <TableHead className="text-gray-400">Descripción</TableHead>
                     <TableHead className="text-gray-400">Tipo Proyecto</TableHead>
                     <TableHead className="flex justify-center text-gray-400">
@@ -263,9 +265,17 @@ export default function Project() {
                     </TableRow>
                   ) : (
                     paginated.map((c) => (
-                      <TableRow key={c.id}>
-                        <TableCell>{c.id}</TableCell>
+                      <TableRow key={c._id}>
+                        <TableCell>{c._id}</TableCell>
                         <TableCell>{c.title}</TableCell>
+                        <TableCell>
+                          {c.createdAt
+                            ? (c.createdAt instanceof Date
+                                ? c.createdAt.toLocaleDateString()
+                                : new Date(c.createdAt).toLocaleDateString())
+                            : "-"}
+                        </TableCell>
+
                         <TableCell>{c.description}</TableCell>
                         <TableCell>{c.projectType}</TableCell>
                         <TableCell className="flex items-center justify-center space-x-2">
@@ -361,8 +371,8 @@ export default function Project() {
               setSelectedProject(null);
             }}
             onConfirm={async () => {
-              if (selectedProject && selectedProject.id) {
-                await handleDeleteProject(selectedProject.id);
+              if (selectedProject && selectedProject._id) {
+                await handleDeleteProject(selectedProject._id);
               }
               setDeleteModalOpen(false);
               setSelectedProject(null);

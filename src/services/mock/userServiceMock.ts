@@ -2,8 +2,9 @@ import type { IUserService } from "@/services/interfaces/IUserService";
 import { Role } from "@/types/Role";
 import type { User, UserFormData } from "@/types/User";
 
-export const USERS = [
+export const USERS: User[] = [
   {
+    _id: "1",
     email: "admin1@example.com",
     firstName: "John",
     lastName: "Doe",
@@ -12,6 +13,7 @@ export const USERS = [
     password: "admin1pass",
   },
   {
+    _id: "2",
     email: "customer1@example.com",
     firstName: "Jane",
     lastName: "Smith",
@@ -20,6 +22,7 @@ export const USERS = [
     password: "customer1pass",
   },
   {
+    _id: "3",
     email: "user1@example.com",
     firstName: "Alice",
     lastName: "Johnson",
@@ -28,6 +31,7 @@ export const USERS = [
     password: "user1pass",
   },
   {
+    _id: "4",
     email: "user2@example.com",
     firstName: "Bob",
     lastName: "Brown",
@@ -36,6 +40,7 @@ export const USERS = [
     password: "user2pass",
   },
   {
+    _id: "5",
     email: "customer2@example.com",
     firstName: "usuario",
     lastName: "5",
@@ -120,7 +125,7 @@ class UserServiceMock implements IUserService {
           success: false,
           message: "Usuario no encontrado (mock)",
         });
-      const userWithId: User = { id: user.email, ...user };
+      const userWithId: User = { _id: user._id, ...user };
       return Promise.resolve({ success: true, user: userWithId });
     } catch {
       return Promise.resolve({

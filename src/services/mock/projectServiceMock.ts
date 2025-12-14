@@ -5,7 +5,7 @@ import { USERS } from "./userServiceMock";
 
 export const PROJECTS: Project[] = [
   {
-    id: "1",
+    _id: "1",
     title: "Proyecto Alpha",
     description: "Implementación inicial del sistema Alpha",
     registrationDate: new Date("2025-01-10T09:00:00Z"),
@@ -13,7 +13,7 @@ export const PROJECTS: Project[] = [
     projectType: ProjectType.COMMERCIAL,
   },
   {
-    id: "2",
+    _id: "2",
     title: "Proyecto Beta",
     description: "Mantenimiento y mejoras para Beta",
     registrationDate: new Date("2025-02-15T10:30:00Z"),
@@ -21,7 +21,7 @@ export const PROJECTS: Project[] = [
     projectType: ProjectType.CONSTRUCTION,
   },
   {
-    id: "3",
+    _id: "3",
     title: "Proyecto Gamma",
     description: "Despliegue en producción de Gamma",
     registrationDate: new Date("2025-03-20T14:15:00Z"),
@@ -29,7 +29,7 @@ export const PROJECTS: Project[] = [
     projectType: ProjectType.MAINTENANCE,
   },
   {
-    id: "4",
+    _id: "4",
     title: "Proyecto Delta",
     description: "Servicios asociados al proyecto Delta",
     registrationDate: new Date("2025-04-05T08:45:00Z"),
@@ -37,7 +37,7 @@ export const PROJECTS: Project[] = [
     projectType: ProjectType.PRODUCTION,
   },
   {
-    id: "5",
+    _id: "5",
     title: "Proyecto Escondido",
     description: "Nadie debe saberlo",
     registrationDate: new Date("2025-04-05T08:45:00Z"),
@@ -45,7 +45,7 @@ export const PROJECTS: Project[] = [
     projectType: ProjectType.TECHNOLOGY,
   },
   {
-    id: "6",
+    _id: "6",
     title: "Proyecto Epsilon",
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
@@ -53,7 +53,7 @@ export const PROJECTS: Project[] = [
     projectType: ProjectType.COMMERCIAL,
   },
   {
-    id: "7",
+    _id: "7",
     title: "Proyecto Epsilon",
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
@@ -61,7 +61,7 @@ export const PROJECTS: Project[] = [
     projectType: ProjectType.COMMERCIAL,
   },
   {
-    id: "8",
+    _id: "8",
     title: "Proyecto Epsilon",
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
@@ -69,7 +69,7 @@ export const PROJECTS: Project[] = [
     projectType: ProjectType.COMMERCIAL,
   },
   {
-    id: "9",
+    _id: "9",
     title: "Proyecto Epsilon",
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
@@ -77,7 +77,7 @@ export const PROJECTS: Project[] = [
     projectType: ProjectType.PRODUCTION,
   },
   {
-    id: "10",
+    _id: "10",
     title: "Proyecto Epsilon",
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
@@ -85,7 +85,7 @@ export const PROJECTS: Project[] = [
     projectType: ProjectType.SERVICES,
   },
   {
-    id: "11",
+    _id: "11",
     title: "Proyecto Epsilon",
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
@@ -93,7 +93,7 @@ export const PROJECTS: Project[] = [
     projectType: ProjectType.TECHNOLOGY,
   },
   {
-    id: "12",
+    _id: "12",
     title: "Proyecto Epsilon",
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
@@ -110,7 +110,7 @@ class ProjectServiceMock implements IProjectService {
 
   async createProject(_token: string, project: Partial<Project>) {
     const newProject: Project = {
-      id: "20",
+      _id: "20",
       title: project.title ?? "Nuevo Proyecto",
       description: project.description ?? "",
       registrationDate: project.registrationDate ?? new Date(),
@@ -122,14 +122,14 @@ class ProjectServiceMock implements IProjectService {
   }
 
   async updateProjectById(_token: string, project: Partial<Project>) {
-    const idx = PROJECTS.findIndex((p) => p.id === project.id);
+    const idx = PROJECTS.findIndex((p) => p._id === project._id);
     if (idx === -1) return { success: false, message: "Proyecto no encontrado (mock)" };
     PROJECTS[idx] = { ...PROJECTS[idx], ...project };
     return { success: true, project: PROJECTS[idx] };
   }
 
   async deleteProjectById(_token: string, projectId: string) {
-    const idx = PROJECTS.findIndex((p) => p.id === projectId);
+    const idx = PROJECTS.findIndex((p) => p._id === projectId);
     if (idx === -1) return { success: false, message: "Proyecto no encontrado (mock)" };
     PROJECTS.splice(idx, 1);
     return { success: true };

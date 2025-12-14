@@ -1,5 +1,5 @@
 export interface Message {
-  id?: string;
+  _id?: string;
   claimId: string;
   name?: string;
   lastname?: string;

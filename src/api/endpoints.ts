@@ -33,6 +33,7 @@ export const API_ENDPOINTS = {
   claims: {
     GET_ALL: "/claims",
     GET_CLAIM_BY_ID: (id: string) => `/claims/${id}`,
+    GET_CLAIM_HISTORY: (id: string) => `/claims/${id}/history`,
     CREATE_CLAIM: "/claims",
     UPDATE_CLAIM_BY_ID: (id: string) => `/claims/${id}`,
   },

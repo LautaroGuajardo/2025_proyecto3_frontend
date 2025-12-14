@@ -1,12 +1,7 @@
 import type { Subarea } from "./Subarea";
 
 export interface Area {
-  id: string;
-  name: string;
-  subareas?: Subarea[];
-}
-
-export interface AreaFormData {
+  _id: string;
   name: string;
   subareas?: Subarea[];
 }

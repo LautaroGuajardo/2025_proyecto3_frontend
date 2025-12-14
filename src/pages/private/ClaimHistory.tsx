@@ -72,9 +72,9 @@ export default function ClaimHistory() {
     const list = [...filtered];
     switch (orderBy) {
       case "startAsc":
-        return list.sort((a, b) => (new Date(a.startDateHour || 0).getTime() - new Date(b.startDateHour || 0).getTime()));
+        return list.sort((a, b) => (new Date(a.startTime || 0).getTime() - new Date(b.startTime || 0).getTime()));
       case "startDesc":
-        return list.sort((a, b) => (new Date(b.startDateHour || 0).getTime() - new Date(a.startDateHour || 0).getTime()));
+        return list.sort((a, b) => (new Date(b.startTime || 0).getTime() - new Date(a.startTime || 0).getTime()));
       case "latest":
       default:
         return list;
@@ -162,17 +162,17 @@ export default function ClaimHistory() {
                   </TableRow>
                 ) : (
                   paginated.map((h) => (
-                    <TableRow key={h.id}>
-                      <TableCell>{h.claimId}</TableCell>
+                    <TableRow key={h._id}>
+                      <TableCell>{h.claim}</TableCell>
                       <TableCell>{`${h.user?.firstName || ""} ${h.user?.lastName || ""}`}</TableCell>
                       <TableCell>{h.action || "-"}</TableCell>
                       <TableCell>{h.priority}</TableCell>
                       <TableCell>{h.criticality}</TableCell>
-                      <TableCell>{h.area ?? (h.area ?? "-")}</TableCell>
-                      {!isCustomer && <TableCell>{h.subarea ?? (h.subarea ?? "-")}</TableCell>}
+                      <TableCell>{h.area?.name ?? (h.area?.name ?? "-")}</TableCell>
+                      {!isCustomer && <TableCell>{h.area?.subarea?.name ?? (h.area?.subarea?.name ?? "-")}</TableCell>}
                       <TableCell>{h.claimStatus ?? "-"}</TableCell>
-                      <TableCell>{fmt(h.startDateHour)}</TableCell>
-                      <TableCell>{fmt(h.endDateHour)}</TableCell>
+                      <TableCell>{fmt(h.startTime)}</TableCell>
+                      <TableCell>{fmt(h.endTime)}</TableCell>
                     </TableRow>
                   ))
                 )}

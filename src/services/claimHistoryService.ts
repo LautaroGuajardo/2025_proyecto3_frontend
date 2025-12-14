@@ -8,7 +8,7 @@ class ClaimHistoryServiceReal implements IClaimHistoryService {
     claimId: string
   ): Promise<{ success: boolean; message?: string; claimHistory?: ClaimHistory[] }> {
     try {
-      const response = await fetch(`${apiEndpoints.claims.GET_CLAIM_BY_ID}/${claimId}`, {
+      const response = await fetch(`${apiEndpoints.claims.GET_CLAIM_HISTORY(claimId)}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

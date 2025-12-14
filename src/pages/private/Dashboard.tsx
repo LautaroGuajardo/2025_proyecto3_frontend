@@ -65,10 +65,10 @@ export default function Dashboard() {
 
   const claimCounts = useMemo(() => {
     const total = claims.length;
-    const pendiente = claims.filter((c) => c.claimStatus === ClaimStatus.PENDIENTE).length;
-    const progreso = claims.filter((c) => c.claimStatus === ClaimStatus.PROGRESO).length;
-    const resuelto = claims.filter((c) => c.claimStatus === ClaimStatus.RESUELTO).length;
-    return { total, pendiente, progreso, resuelto };
+    const pending = claims.filter((c) => c.claimStatus === ClaimStatus.PENDING).length;
+    const inProgress = claims.filter((c) => c.claimStatus === ClaimStatus.IN_PROGRESS).length;
+    const resolved = claims.filter((c) => c.claimStatus === ClaimStatus.RESOLVED).length;
+    return { total, pending, inProgress, resolved };
   }, [claims]);
 
   const monthlyClaims = useMemo(() => {
