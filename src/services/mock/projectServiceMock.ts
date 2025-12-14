@@ -128,8 +128,8 @@ class ProjectServiceMock implements IProjectService {
     return { success: true, project: PROJECTS[idx] };
   }
 
-  async deleteProjectById(_token: string, projectId: string) {
-    const idx = PROJECTS.findIndex((p) => p._id === projectId);
+  async deleteProjectById(_token: string, project: string) {
+    const idx = PROJECTS.findIndex((p) => p._id === project);
     if (idx === -1) return { success: false, message: "Proyecto no encontrado (mock)" };
     PROJECTS.splice(idx, 1);
     return { success: true };

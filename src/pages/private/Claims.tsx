@@ -114,7 +114,7 @@ export default function Claims() {
         ((c._id || "").toLowerCase().includes(q)) ||
         (c.description || "").toLowerCase().includes(q) ||
         (c.claimType || "").toLowerCase().includes(q) ||
-        (c.area.name || "").toLowerCase().includes(q)
+        (c.area?.name || "").toLowerCase().includes(q)
       );
     });
   }, [claims, search, statusFilter]);

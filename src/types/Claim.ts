@@ -1,4 +1,4 @@
-import type { Area } from "recharts";
+import type { Area } from "./Area";
 import type { ClaimStatus } from "./ClaimStatus";
 import type { ClaimType } from "./ClaimType";
 import type { Criticality } from "./Criticality";
