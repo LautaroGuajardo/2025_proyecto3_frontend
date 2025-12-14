@@ -30,6 +30,7 @@ import EditClaimModal from "@/pages/private/components/EditClaimModal";
 import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
 import EditButton from "@/components/common/EditButton";
 import DeleteButton from "@/components/common/DeleteButton";
+import type { Claim } from "@/types/Claim";
 
 export default function Project() {
   const { getAccessToken, logout } = useAuth();
@@ -49,7 +50,7 @@ export default function Project() {
   const perPage = 10;
 
   const [claimModalOpen, setClaimModalOpen] = useState(false);
-  const [claimInitial, setClaimInitial] = useState<any | null>(null);
+  const [claimInitial, setClaimInitial] = useState<Claim | null>(null);
 
   const { getAllProjects } = projectService;
 
@@ -98,17 +99,16 @@ export default function Project() {
       const {
         success,
         project: created,
-        message,
       } = await projectService.createProject(token, {
         title: project.title,
         description: project.description,
         projectType: project.projectType,
       });
       if (!success || !created) {
-        toast.error(message || "No se pudo crear el proyecto.");
+        toast.error("No se pudo crear el proyecto.");
         return;
       }
-      setProjects((p) => [created, ...p]);
+      setProjects((pj) => [created, ...pj]);
       toast.success("Proyecto creado");
     } else {
       if (!("id" in project) || !project.id)
@@ -126,8 +126,8 @@ export default function Project() {
         toast.error(message || "No se pudo actualizar el proyecto.");
         return;
       }
-      setProjects((p) =>
-        p.map((c) => (c.id === updatedProject?.id ? updatedProject : c))
+      setProjects((pj) =>
+        pj.map((pjselected) => (pjselected.id === updatedProject?.id ? updatedProject : pjselected))
       );
       toast.success("Proyecto actualizado");
     }
@@ -149,17 +149,17 @@ export default function Project() {
       toast.error(message || "No se pudo eliminar el proyecto.");
       return;
     }
-    setProjects((p) => p.filter((c) => c.id !== id));
+    setProjects((pj) => pj.filter((pjselected) => pjselected.id !== id));
     toast.success("Proyecto eliminado");
   };
 
-  const filtered = projects.filter((c) => {
+  const filtered = projects.filter((pjselected) => {
     const q = search.toLowerCase().trim();
     if (!q) return true;
     return (
-      c.title.toLowerCase().includes(q) ||
-      (c.description || "").toLowerCase().includes(q) ||
-      c.id.includes(q)
+      pjselected.title.toLowerCase().includes(q) ||
+      (pjselected.description || "").toLowerCase().includes(q) ||
+      pjselected.id.includes(q)
     );
   });
 
@@ -183,12 +183,9 @@ export default function Project() {
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [totalPages, currentPage]);
+  Promise.resolve().then(() => setCurrentPage(1));
+}, [orderBy]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [orderBy]);
 
   return (
     <>
@@ -289,7 +286,7 @@ export default function Project() {
                             variant="outline"
                             title="Crear Reclamo"
                             onClick={() => {
-                              setClaimInitial({ project: c });
+                              setClaimInitial({ project: c } as Claim);
                               setClaimModalOpen(true);
                             }}
                           >

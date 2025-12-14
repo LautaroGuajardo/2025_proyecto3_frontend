@@ -138,7 +138,8 @@ export default function ClaimHistory() {
                   <TableHead className="text-gray-400">Reclamo</TableHead>
                   <TableHead className="text-gray-400">Empleado</TableHead>
                   <TableHead className="text-gray-400">Acción</TableHead>
-                  <TableHead className="text-gray-400">Tipo Reclamo</TableHead>
+                  <TableHead className="text-gray-400">Prioridad</TableHead>
+                  <TableHead className="text-gray-400">Criticidad</TableHead>
                   <TableHead className="text-gray-400">Área</TableHead>
                   {!isCustomer && <TableHead className="text-gray-400">Subárea</TableHead>}
                   <TableHead className="text-gray-400">Estado</TableHead>
@@ -165,7 +166,8 @@ export default function ClaimHistory() {
                       <TableCell>{h.claimId}</TableCell>
                       <TableCell>{`${h.user?.firstName || ""} ${h.user?.lastName || ""}`}</TableCell>
                       <TableCell>{h.action || "-"}</TableCell>
-                      <TableCell>{h.claimType}</TableCell>
+                      <TableCell>{h.priority}</TableCell>
+                      <TableCell>{h.criticality}</TableCell>
                       <TableCell>{h.area ?? (h.area ?? "-")}</TableCell>
                       {!isCustomer && <TableCell>{h.subarea ?? (h.subarea ?? "-")}</TableCell>}
                       <TableCell>{h.claimStatus ?? "-"}</TableCell>

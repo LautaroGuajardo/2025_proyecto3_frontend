@@ -1,9 +1,8 @@
 export const Criticality = {
-  BLOQUEANTE: "BLOQUEANTE",
-  CRITICA: "CRITICA",
-  ALTA: "ALTA",
-  MEDIA: "MEDIA",
-  BAJA: "BAJA",
+  MINOR: 'MINOR',
+  MAJOR: 'MAJOR',
+  CRITICAL: 'CRITICAL',
+  BLOCKER: 'BLOCKER',
 } as const;
 
 export type Criticality = (typeof Criticality)[keyof typeof Criticality];

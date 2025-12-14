@@ -24,7 +24,7 @@ class TokenServiceReal implements ITokenService {
     } catch (error) {
       return {
         success: false,
-        message: "Error al conectar con el servidor",
+        message: (error instanceof Error ? error.message : String(error)),
       };
     }
   }

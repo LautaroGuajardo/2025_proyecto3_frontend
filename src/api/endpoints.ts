@@ -6,15 +6,15 @@ export const API_ENDPOINTS = {
     VERIFY_ACCOUNT: "/auth/verify-account",
     RESEND_VERIFICATION: "/auth/resend-verification",
     CHANGE_DATA: "/auth/change-data",
-    REGENERATE_OTP: (email: string) =>
-      `/auth/regenerate-otp?email=${encodeURIComponent(email)}`,
     VALIDATE_TOKEN: "/auth/validate-token",
+  },
+
+  create_user: {
+    REGISTER: "/create-user/",
   },
 
   projects: {
     GET_ALL: "/projects",
-    GET_PROJECTS_BY_USER_ID: (userId: string) => `/projects/user/${userId}`,
-    GET_PROJECT: (id: string) => `/projects/${id}`,
     CREATE_PROJECT: "/projects",
     UPDATE_PROJECT: (id: string) => `/projects/${id}`,
     DELETE_PROJECT: (id: string) => `/projects/${id}`,
@@ -25,25 +25,21 @@ export const API_ENDPOINTS = {
   },
 
   messages: {
-    SEND_MESSAGE: (id: string) => `/claims/${id}`,
-    GET_MESSAGES_BY_CLAIM_ID: (claimId: string) => `/claims/${claimId}`,
+    SEND_MESSAGE: (id: string) => `/claims/${id}/message`,
+    GET_MESSAGES_BY_CLAIM_ID: (claimId: string) => `/claims/${claimId}/messages`,
   },
-
-  subareas: {
-    GET_ALL: "/sub-areas",
-  },
+  
 
   claims: {
     GET_ALL: "/claims",
     GET_CLAIM_BY_ID: (id: string) => `/claims/${id}`,
     CREATE_CLAIM: "/claims",
     UPDATE_CLAIM_BY_ID: (id: string) => `/claims/${id}`,
-    DELETE_CLAIM_BY_ID: (id: string) => `/claims/${id}`,
   },
 
   users: {
     GET_ALL: "/users",
-    GET_PROFILE: "/usuarios/profile",
+    GET_PROFILE: "/auth/me",
     GET_USER_BY_EMAIL: (email: string) =>
       `/users/${encodeURIComponent(email)}`,
     UPDATE_USER_PROFILE: `/users/profile`,

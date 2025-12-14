@@ -65,12 +65,6 @@ export const roleBasedRoutes: Record<Role, RouteItem[]> = {
       hiddenOnSidebar: true,
     },
     {
-      label: "Usuarios",
-      to: "/users",
-      icon: User,
-      element: <Users />,
-    },
-    {
       label: "Dashboard",
       to: "/dashboard",
       icon: MessageCircleWarning,
@@ -97,6 +91,12 @@ export const roleBasedRoutes: Record<Role, RouteItem[]> = {
       icon: User,
       element: <Users />,
     },
+    {
+      label: "Dashboard",
+      to: "/dashboard",
+      icon: MessageCircleWarning,
+      element: <Dashboard />,
+    },
   ],
   [Role.AUDITOR]: [
     {
@@ -112,6 +112,12 @@ export const roleBasedRoutes: Record<Role, RouteItem[]> = {
       element: <ClaimHistory />, 
       hiddenOnSidebar: true,
     },
+    {
+      label: "Dashboard",
+      to: "/dashboard",
+      icon: MessageCircleWarning,
+      element: <Dashboard />,
+    },
   ],
   [Role.USER]: [
     {
@@ -126,6 +132,12 @@ export const roleBasedRoutes: Record<Role, RouteItem[]> = {
       icon: MessageCircleWarning,
       element: <ClaimHistory />, 
       hiddenOnSidebar: true,
+    },
+    {
+      label: "Dashboard",
+      to: "/dashboard",
+      icon: MessageCircleWarning,
+      element: <Dashboard />,
     },
   ],  
 }

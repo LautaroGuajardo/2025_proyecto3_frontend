@@ -88,12 +88,12 @@ export default function Claims() {
     return String(item);
   };
 
-  const getPriorityValue = (p: any) => {
-    if (!p && p !== 0) return "";
-    if (typeof p === "string") return p;
-    if (p.name) return p.name;
-    if (p.value) return p.value;
-    return String(p);
+  const getPriorityValue = (priority: any) => {
+    if (!priority && priority !== 0) return "";
+    if (typeof priority === "string") return priority;
+    if (priority.name) return priority.name;
+    if (priority.value) return priority.value;
+    return String(priority);
   };
 
   useEffect(() => {
@@ -104,7 +104,6 @@ export default function Claims() {
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return claims.filter((c) => {
-      // apply status filter first
       if (statusFilter !== "all") {
         const statusLabel = String(getLabel(c.claimStatus)).toLowerCase();
         if (statusLabel !== String(statusFilter).toLowerCase()) return false;
@@ -112,7 +111,7 @@ export default function Claims() {
 
       if (!q) return true;
       return (
-        (c.claimCode || "").toLowerCase().includes(q) ||
+        ((c.id || "").toLowerCase().includes(q)) ||
         (c.description || "").toLowerCase().includes(q) ||
         (c.claimType || "").toLowerCase().includes(q) ||
         (c.area || "").toLowerCase().includes(q)
@@ -204,7 +203,7 @@ export default function Claims() {
                   ) : (
                     paginated.map((claim: Claim) => (
                       <TableRow key={claim.id}>
-                        <TableCell>{claim.claimCode}</TableCell>
+                        <TableCell>{claim.id}</TableCell>
                         <TableCell>{claim.description}</TableCell>
                         <TableCell>{getLabel(claim.claimType)}</TableCell>
                         <TableCell>{getLabel(claim.criticality)}</TableCell>

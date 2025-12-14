@@ -42,7 +42,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [claimCode, setClaimCode] = useState("");
+  const [claimId, setClaimId] = useState("");
   const [description, setDescription] = useState("");
   const [claimTypeId, setClaimTypeId] = useState("");
   const [criticalityId, setCriticalityId] = useState("");
@@ -70,7 +70,6 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
 
   const claimSchema = z.object({
     id: z.string().optional(),
-    claimCode: z.string().min(1, "El código es obligatorio"),
     description: z.string().optional(),
     claimType: z.string().min(1, "El tipo es obligatorio"),
     criticality: z.string().min(1, "La criticidad es obligatoria"),
@@ -99,9 +98,9 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
 
   useEffect(() => {
     if (claim) {
-      const editing = Boolean((claim).id);
+      const editing = Boolean(claim.id);
       if (editing) {
-        setClaimCode(claim.claimCode || "");
+        setClaimId(claim.id || "");
         setDescription(claim.description || "");
         setClaimTypeId(String((claim.claimType) ?? claim.claimType ?? ""));
         setCriticalityId(String((claim.criticality) ?? claim.criticality ?? ""));
@@ -130,7 +129,6 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
           if (foundArea) setSelectedAreaId(foundArea.id);
         }
       } else {
-        setClaimCode("");
         setDescription("");
         setClaimTypeId("");
         setCriticalityId("");
@@ -143,7 +141,6 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         setActions("");
       }
     } else {
-      setClaimCode("");
       setDescription("");
       setClaimTypeId("");
       setCriticalityId("");
@@ -236,7 +233,6 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
     if (isEdit && claim) {
       const parsed = claimSchema.safeParse({
         id: String(claim.id),
-        claimCode,
         description: description || undefined,
         claimType: claimTypeId,
         criticality: criticalityId,
@@ -262,11 +258,9 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         subarea: subareaName || undefined,
         claimStatus: statusId || claim.claimStatus,
         actions: actions || undefined,
-        // attachments no modificables en edición
       };
       const { success, message } = await claimService.updateClaimById(
         token,
-        claim.id,
         toSave
       );
       if (!success) {
@@ -277,7 +271,6 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
     }
     else {
       const parsed = claimSchema.safeParse({
-        claimCode,
         description: description || undefined,
         claimType: claimTypeId,
         criticality: criticalityId,
@@ -373,26 +366,27 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
                 )}
               </div>
 
-              <div className="flex gap-1 flex-col">
-                <div className="flex w-full">
-                  <Label htmlFor="claimCode" className="text-nowrap text-gray-500 w-2/5">
-                    Código*
-                  </Label>
-                  <Input
-                    required
-                    id="claimCode" 
-                    name="claimCode" 
-                    value={claimCode} 
-                    onChange={(e)=>setClaimCode(e.target.value)} 
-                    disabled={isEdit || esResuelto}
-                    className="w-3/5" />
+              {isEdit && (
+                <div className="flex gap-1 flex-col">
+                  <div className="flex w-full">
+                    <Label htmlFor="claimId" className="text-nowrap text-gray-500 w-2/5">
+                      Código*
+                    </Label>
+                    <Input
+                      id="claimId"
+                      name="claimId"
+                      value={claimId}
+                      onChange={(e) => setClaimId(e.target.value)}
+                      disabled={true}
+                      className="w-3/5" />
+                  </div>
+                  <div className="w-3/5 ml-auto">
+                    {errors.claimId && (
+                      <p className="text-sm text-start text-red-500">{errors.claimId}</p>
+                    )}
+                  </div>
                 </div>
-                <div className="w-3/5 ml-auto">
-                  {errors.claimCode && (
-                    <p className="text-sm text-start text-red-500">{errors.claimCode}</p>
-                  )}
-                </div>
-              </div>
+              )}
 
               <div className="flex gap-1 flex-col">
                 <div className="flex w-full">

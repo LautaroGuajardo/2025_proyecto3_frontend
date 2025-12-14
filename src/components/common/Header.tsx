@@ -1,5 +1,4 @@
-import { useNavigate } from "react-router";
-import { LogOut, Menu, User } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -21,7 +20,6 @@ export default function Header({
   userAvatarUrl,
   onToggleSidebar,
 }: HeaderProps) {
-  const navigate = useNavigate();
 
   const { logout, name, lastname } = useAuth();
 

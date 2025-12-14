@@ -2,13 +2,15 @@ import type { IClaimHistoryService } from "../interfaces/IClaimHistoryService";
 import type { ClaimHistory } from "@/types/ClaimHistory";
 import { ClaimStatus } from "@/types/ClaimStatus";
 import { USERS } from "./userServiceMock";
-import { ClaimType } from "@/types/ClaimType";
+import { Priority } from "@/types/Priority";
+import { Criticality } from "@/types/Criticality";
 
 const CLAIM_HISTORY: ClaimHistory[] = [
   {
     id: "1",
     claimId: "1",
-    claimType: ClaimType.TECNICO,
+    priority: Priority.ALTA,
+    criticality: Criticality.MEDIA,
     claimStatus: ClaimStatus.PENDIENTE,
     action: "",
     user: USERS[2],
@@ -20,7 +22,8 @@ const CLAIM_HISTORY: ClaimHistory[] = [
   {
     id: "2",
     claimId: "1",
-    claimType: ClaimType.TECNICO,
+    priority: Priority.ALTA,
+    criticality: Criticality.MEDIA,
     claimStatus: ClaimStatus.PROGRESO,
     action: "",
     area: "Infraestructura",
@@ -32,7 +35,8 @@ const CLAIM_HISTORY: ClaimHistory[] = [
   {
     id: "3",
     claimId: "1",
-    claimType: ClaimType.TECNICO,
+    priority: Priority.ALTA,
+    criticality: Criticality.MEDIA,
     claimStatus: ClaimStatus.PROGRESO,
     action: "",
     area: "Infraestructura",
@@ -44,7 +48,8 @@ const CLAIM_HISTORY: ClaimHistory[] = [
   {
     id: "4",
     claimId: "1",
-    claimType: ClaimType.TECNICO,
+    priority: Priority.ALTA,
+    criticality: Criticality.MEDIA,
     claimStatus: ClaimStatus.PROGRESO,
     action: "",
     area: "Infraestructura",
@@ -56,7 +61,8 @@ const CLAIM_HISTORY: ClaimHistory[] = [
   {
     id: "5",
     claimId: "1",
-    claimType: ClaimType.TECNICO,
+    priority: Priority.ALTA,
+    criticality: Criticality.MEDIA,
     claimStatus: ClaimStatus.PENDIENTE,
     action: "",
     area: "Infraestructura",
@@ -68,7 +74,8 @@ const CLAIM_HISTORY: ClaimHistory[] = [
   {
     id: "6",
     claimId: "1",
-    claimType: ClaimType.TECNICO,
+    priority: Priority.ALTA,
+    criticality: Criticality.MEDIA,
     claimStatus: ClaimStatus.PENDIENTE,
     action: "",
     area: "Infraestructura",

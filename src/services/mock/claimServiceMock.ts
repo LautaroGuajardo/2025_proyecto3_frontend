@@ -12,7 +12,6 @@ import { USERS } from "./userServiceMock";
 export const CLAIMS: Claim[] = [
   {
     id: "1",
-    claimCode: "RC-0001",
     description: "Falla en autenticación",
     claimType: ClaimType.TECNICO,
     claimStatus: ClaimStatus.PENDIENTE,
@@ -24,7 +23,6 @@ export const CLAIMS: Claim[] = [
   },
   {
     id: "2",
-    claimCode: "RC-0002",
     description: "Problema de facturación en el módulo X",
     claimType: ClaimType.FACTURACION,
     claimStatus: ClaimStatus.PENDIENTE,
@@ -36,7 +34,6 @@ export const CLAIMS: Claim[] = [
   },
   {
     id: "3",
-    claimCode: "RC-0003",
     description: "Problema de facturación en el módulo X",
     claimType: ClaimType.FACTURACION,
     claimStatus: ClaimStatus.PENDIENTE,
@@ -48,7 +45,6 @@ export const CLAIMS: Claim[] = [
   },
   {
     id: "4",
-    claimCode: "RC-0004",
     description: "Problema de facturación en el módulo X",
     claimType: ClaimType.FACTURACION,
     claimStatus: ClaimStatus.PENDIENTE,
@@ -60,7 +56,6 @@ export const CLAIMS: Claim[] = [
   },
   {
     id: "5",
-    claimCode: "RC-0005",
     description: "Problema de facturación en el módulo X",
     claimType: ClaimType.FACTURACION,
     claimStatus: ClaimStatus.PENDIENTE,
@@ -72,7 +67,6 @@ export const CLAIMS: Claim[] = [
   },
   {
     id: "6",
-    claimCode: "RC-0006",
     description: "Problema de facturación en el módulo X",
     claimType: ClaimType.FACTURACION,
     claimStatus: ClaimStatus.PENDIENTE,
@@ -84,7 +78,6 @@ export const CLAIMS: Claim[] = [
   },
   {
     id: "7",
-    claimCode: "RC-0007",
     description: "Problema de facturación en el módulo X",
     claimType: ClaimType.FACTURACION,
     claimStatus: ClaimStatus.PENDIENTE,
@@ -96,7 +89,6 @@ export const CLAIMS: Claim[] = [
   },
   {
     id: "8",
-    claimCode: "RC-0008",
     description: "Problema de facturación en el módulo X",
     claimType: ClaimType.FACTURACION,
     claimStatus: ClaimStatus.RESUELTO,
@@ -108,7 +100,6 @@ export const CLAIMS: Claim[] = [
   },
   {
     id: "9",
-    claimCode: "RC-0009",
     description: "Problema de facturación en el módulo X",
     claimType: ClaimType.FACTURACION,
     claimStatus: ClaimStatus.RESUELTO,
@@ -120,7 +111,6 @@ export const CLAIMS: Claim[] = [
   },
   {
     id: "10",
-    claimCode: "RC-0010",
     description: "Problema de facturación en el módulo X",
     claimType: ClaimType.FACTURACION,
     claimStatus: ClaimStatus.PENDIENTE,
@@ -132,7 +122,6 @@ export const CLAIMS: Claim[] = [
   },
   {
     id: "11",
-    claimCode: "RC-0011",
     description: "Problema de facturación en el módulo X",
     claimType: ClaimType.FACTURACION,
     claimStatus: ClaimStatus.PENDIENTE,
@@ -149,15 +138,9 @@ class ClaimServiceMock implements IClaimService {
     void _token; // Evitar warning de variable no usada
     return { success: true, claims: CLAIMS };
   }  
-  async getClaimById(_token: string, claimId: string) {
-    const claim = CLAIMS.find((c) => c.id === claimId);
-    if (!claim) return { success: false, message: "Reclamo no encontrado (mock)" };
-    return { success: true, claim };
-  }  
   async createClaim(_token: string, claim: Partial<Claim>) {
     const newClaim: Claim = {
       id: (CLAIMS.length + 1).toString(),
-      claimCode: claim.claimCode ?? `RC-00${CLAIMS.length + 1}`,
       description: claim.description ?? "",
       claimType: claim.claimType ?? ClaimType.OTRO,
       claimStatus: ClaimStatus.PENDIENTE ?? undefined,
@@ -172,7 +155,8 @@ class ClaimServiceMock implements IClaimService {
       id: String(Date.now()),
       claimId: newClaim.id,
       claimStatus: ClaimStatus.PENDIENTE,
-      claimType: newClaim.claimType,
+      priority: newClaim.priority,
+      criticality: newClaim.criticality,
       action: "Creación de reclamo",
       area: newClaim.area ?? "",
       subarea: newClaim.subarea ?? "",
@@ -182,9 +166,10 @@ class ClaimServiceMock implements IClaimService {
     appendClaimHistoryMock(historyEntry);
 
     return { success: true, claim: newClaim };
-  }  
-  async updateClaimById(_token: string, claimId: string, claim: Partial<Claim>) {
-    const idx = CLAIMS.findIndex((c) => c.id === claimId);
+  }
+    
+  async updateClaimById(_token: string, claim: Partial<Claim>) {
+    const idx = CLAIMS.findIndex((c) => c.id === claim.id);
     if (idx === -1) return { success: false, message: "Reclamo no encontrado (mock)" };
     const previous = CLAIMS[idx];
     const updated = { ...previous, ...claim } as Claim;
@@ -195,7 +180,8 @@ class ClaimServiceMock implements IClaimService {
       id: String(Date.now()),
       claimId: updated.id,
       claimStatus: updated.claimStatus,
-      claimType: updated.claimType,
+      priority: updated.priority,
+      criticality: updated.criticality,
       action: updated.actions,
       user: USERS[0],
       area: updated.area ?? previous.area ?? "",
@@ -205,13 +191,7 @@ class ClaimServiceMock implements IClaimService {
     };
     appendClaimHistoryMock(historyEntry);
     return { success: true, claim: CLAIMS[idx] };
-  }  
-  async deleteClaimById(_token: string, claimId: string) {
-    const idx = CLAIMS.findIndex((c) => c.id === claimId);
-    if (idx === -1) return { success: false, message: "Reclamo no encontrado (mock)" };
-    CLAIMS.splice(idx, 1);
-    return { success: true };
-  }
+  } 
 }
 
 export const claimServiceMock = new ClaimServiceMock();

@@ -10,7 +10,7 @@ export const PROJECTS: Project[] = [
     description: "Implementación inicial del sistema Alpha",
     registrationDate: new Date("2025-01-10T09:00:00Z"),
     user: USERS[1],
-    projectType: ProjectType.TECNOLOGIA,
+    projectType: ProjectType.COMMERCIAL,
   },
   {
     id: "2",
@@ -18,7 +18,7 @@ export const PROJECTS: Project[] = [
     description: "Mantenimiento y mejoras para Beta",
     registrationDate: new Date("2025-02-15T10:30:00Z"),
     user: USERS[1],
-    projectType: ProjectType.MANTENIMIENTO,
+    projectType: ProjectType.CONSTRUCTION,
   },
   {
     id: "3",
@@ -26,7 +26,7 @@ export const PROJECTS: Project[] = [
     description: "Despliegue en producción de Gamma",
     registrationDate: new Date("2025-03-20T14:15:00Z"),
     user: USERS[1],
-    projectType: ProjectType.PRODUCCION,
+    projectType: ProjectType.MAINTENANCE,
   },
   {
     id: "4",
@@ -34,7 +34,7 @@ export const PROJECTS: Project[] = [
     description: "Servicios asociados al proyecto Delta",
     registrationDate: new Date("2025-04-05T08:45:00Z"),
     user: USERS[1],
-    projectType: ProjectType.SERVICIOS,
+    projectType: ProjectType.PRODUCTION,
   },
   {
     id: "5",
@@ -42,7 +42,7 @@ export const PROJECTS: Project[] = [
     description: "Nadie debe saberlo",
     registrationDate: new Date("2025-04-05T08:45:00Z"),
     user: USERS[1],
-    projectType: ProjectType.SERVICIOS,
+    projectType: ProjectType.TECHNOLOGY,
   },
   {
     id: "6",
@@ -50,7 +50,7 @@ export const PROJECTS: Project[] = [
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
     user: USERS[1],
-    projectType: ProjectType.COMERCIAL,
+    projectType: ProjectType.COMMERCIAL,
   },
   {
     id: "7",
@@ -58,7 +58,7 @@ export const PROJECTS: Project[] = [
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
     user: USERS[1],
-    projectType: ProjectType.COMERCIAL,
+    projectType: ProjectType.COMMERCIAL,
   },
   {
     id: "8",
@@ -66,7 +66,7 @@ export const PROJECTS: Project[] = [
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
     user: USERS[1],
-    projectType: ProjectType.COMERCIAL,
+    projectType: ProjectType.COMMERCIAL,
   },
   {
     id: "9",
@@ -74,7 +74,7 @@ export const PROJECTS: Project[] = [
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
     user: USERS[1],
-    projectType: ProjectType.COMERCIAL,
+    projectType: ProjectType.PRODUCTION,
   },
   {
     id: "10",
@@ -82,7 +82,7 @@ export const PROJECTS: Project[] = [
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
     user: USERS[1],
-    projectType: ProjectType.COMERCIAL,
+    projectType: ProjectType.SERVICES,
   },
   {
     id: "11",
@@ -90,7 +90,7 @@ export const PROJECTS: Project[] = [
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
     user: USERS[1],
-    projectType: ProjectType.COMERCIAL,
+    projectType: ProjectType.TECHNOLOGY,
   },
   {
     id: "12",
@@ -98,7 +98,7 @@ export const PROJECTS: Project[] = [
     description: "Nuevo proyecto para el cliente 2",
     registrationDate: new Date("2025-05-12T11:20:00Z"),
     user: USERS[1],
-    projectType: ProjectType.COMERCIAL,
+    projectType: ProjectType.MAINTENANCE,
   },
 ];
 
@@ -108,17 +108,6 @@ class ProjectServiceMock implements IProjectService {
     return { success: true, projects: PROJECTS };
   }
 
-  async getProjectsByUserId(_token: string, userId: string) {
-    const projects = PROJECTS.filter((p) => p.user.email === userId);
-    return { success: true, projects };
-  }
-
-  async getProjectById(_token: string, projectId: string) {
-    const project = PROJECTS.find((p) => p.id === projectId);
-    if (!project) return { success: false, message: "Proyecto no encontrado (mock)" };
-    return { success: true, project };
-  }
-
   async createProject(_token: string, project: Partial<Project>) {
     const newProject: Project = {
       id: "20",
@@ -126,14 +115,14 @@ class ProjectServiceMock implements IProjectService {
       description: project.description ?? "",
       registrationDate: project.registrationDate ?? new Date(),
       user: project.user ?? USERS[1],
-      projectType: project.projectType ?? ProjectType.COMERCIAL,
+      projectType: project.projectType ?? ProjectType.COMMERCIAL,
     };
     PROJECTS.push(newProject);
     return { success: true, project: newProject };
   }
 
-  async updateProjectById(_token: string, projectId: string, project: Partial<Project>) {
-    const idx = PROJECTS.findIndex((p) => p.id === projectId);
+  async updateProjectById(_token: string, project: Partial<Project>) {
+    const idx = PROJECTS.findIndex((p) => p.id === project.id);
     if (idx === -1) return { success: false, message: "Proyecto no encontrado (mock)" };
     PROJECTS[idx] = { ...PROJECTS[idx], ...project };
     return { success: true, project: PROJECTS[idx] };
