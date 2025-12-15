@@ -316,7 +316,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         criticality: criticalityId ? (criticalityId as unknown as Criticality) : undefined,
         priority: priorityId ? (priorityId as unknown as Priority) : undefined,
         // backend expects `project` as id string
-        project: { _id: project },
+        project: project,
         // backend expects `subarea` as id (do NOT send `area`)
         subarea: selectedSubareaId ? { _id: selectedSubareaId } : undefined,
         claimStatus: statusId ? (statusId as unknown as ClaimStatus) : claim.claimStatus,
