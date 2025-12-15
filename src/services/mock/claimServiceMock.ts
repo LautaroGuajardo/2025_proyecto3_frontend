@@ -1,4 +1,4 @@
-import type { Claim } from "@/types/Claim";
+{/*import type { Claim, CreateClaim } from "@/types/Claim";
 import type { IClaimService } from "@/services/interfaces/IClaimService";
 import { Criticality } from "@/types/Criticality";
 import { ClaimType } from "@/types/ClaimType";
@@ -204,11 +204,11 @@ class ClaimServiceMock implements IClaimService {
     void _token; // Evitar warning de variable no usada
     return { success: true, claims: CLAIMS };
   }  
-  async createClaim(_token: string, claim: Partial<Claim>) {
-    const newClaim: Claim = {
+  async createClaim(_token: string, claim: CreateClaim) {
+    const newClaim: CreateClaim = {
       _id: (CLAIMS.length + 1).toString(),
       description: claim.description ?? "",
-      claimType: claim.claimType ?? ClaimType.OTHER,
+      claimType: claim.claimType ?? undefined,
       claimStatus: ClaimStatus.PENDING ?? undefined,
       criticality: claim.criticality ?? Criticality.MINOR,
       priority: claim.priority ?? Priority.LOW,
@@ -260,3 +260,4 @@ class ClaimServiceMock implements IClaimService {
 }
 
 export const claimServiceMock = new ClaimServiceMock();
+*/}

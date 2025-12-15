@@ -15,7 +15,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 import { toast } from "react-toastify";
 import { z } from "zod";
 
-import type { Claim } from "@/types/Claim";
+import type { Claim, CreateClaim, UpdateClaim } from "@/types/Claim";
 import type { Project } from "@/types/Project";
 import type { Area } from "@/types/Area";
 import { Role } from "@/types/Role";
@@ -72,7 +72,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
 
   const claimSchema = z.object({
     id: z.string().optional(),
-    description: z.string().optional(),
+    description: z.string(),
     claimType: z.string().min(1, "El tipo es obligatorio"),
     criticality: z.string().min(1, "La criticidad es obligatoria"),
     priority: z.string().min(1, "La prioridad es obligatoria"),
@@ -93,13 +93,10 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
 
       if (projRes.success && projRes.projects) setProjects(projRes.projects.map((c)=> ({...c, id: String((c)._id)})));
       if (areasRes.success && areasRes.areas) {
-        // normalize incoming areas so each subarea includes a reference to its parent area
-        // (the Subarea type requires an `area` property)
         const normalized = areasRes.areas.map((a) => ({
           ...a,
           subareas: (a.subareas || []).map((s) => ({
             ...s,
-            // provide a minimal area object for the subarea to satisfy the Subarea.type
             area: { _id: a._id, name: a.name, subareas: []},
           })),
         }));
@@ -111,95 +108,84 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
   }, [open]);
 
   useEffect(() => {
-    if (claim) {
-      const editing = Boolean(claim._id);
-      if (editing) {
-        setClaimId(claim._id || "");
-        setDescription(claim.description || "");
-        setClaimTypeId(String((claim.claimType) ?? claim.claimType ?? ""));
-        setCriticalityId(String((claim.criticality) ?? claim.criticality ?? ""));
-        setPriorityId(String((claim.priority) ?? claim.priority ?? ""));
-        setStatusId(String(claim.claimStatus ?? ""));
-        setProject(String((claim.project)?._id ?? ""));
-        // Siempre dejar el campo 'actions' vacío al abrir el modal,
-        // porque debe ser completado cada vez que se haga un cambio.
-        setActions("");
-        
-        // runtime type guards to avoid unsafe casting
-        const isObject = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object";
-        //const hasName = (v: unknown): v is { name: unknown } => isObject(v) && "name" in v;
-
-        if (typeof claim.subarea?.area === "string") {
-          // si el area viene como string (antiguo) lo tratamos como nombre
-          const claimAreaStr = claim.subarea.area;
-          setAreaName(claimAreaStr);
-          const foundArea = areas.find(a => a.name === claimAreaStr);
-          if (foundArea) {
-            setSelectedAreaId(foundArea._id);
-          } else {
-            setSelectedAreaId("");
-          }
-        } else if (isObject(claim.subarea?.area)) {
-          const areaObj = claim.subarea.area as Record<string, unknown>;
-          // preferimos el _id cuando esté disponible
-          if ("_id" in areaObj && areaObj._id) {
-            setSelectedAreaId(String(areaObj._id));
-          } else {
-            setSelectedAreaId("");
-          }
-          if ("name" in areaObj && typeof areaObj.name === "string") {
-            setAreaName(areaObj.name as string);
-          } else {
-            setAreaName("");
-          }
-
-          const sub = areaObj.subarea;
-          if (typeof sub === "string") {
-            setSubareaName(sub);
-            // try to find subarea id by name
-            const found = areas
-              .find(a => String(a._id) === String(areaObj._id))
-              ?.subareas?.find((s: Subarea) => s.name === sub);
-            setSelectedSubareaId(found?._id || "");
-          } else if (isObject(sub)) {
-            const subObj = sub as Record<string, unknown>;
-            if ("_id" in subObj && subObj._id) setSelectedSubareaId(String(subObj._id));
-            if ("name" in subObj && typeof subObj.name === "string") setSubareaName(subObj.name as string);
-          } else {
-            setSubareaName("");
-            setSelectedSubareaId("");
-          }
-        } else {
-          // no area
-          setAreaName("");
-          setSubareaName("");
-          setSelectedAreaId("");
-          setSelectedSubareaId("");
-        }
-      } else {
-        setDescription("");
-        setClaimTypeId("");
-        setCriticalityId("");
-        setPriorityId("");
-        setStatusId("");
-        setProject(String((claim).project?._id ?? ""));
-        setSelectedAreaId("");
-        setAreaName("");
-        setSubareaName("");
-        setActions("");
-      }
-    } else {
+    const resetForm = () => {
+      setClaimId("");
       setDescription("");
       setClaimTypeId("");
       setCriticalityId("");
       setPriorityId("");
+      setStatusId("");
       setProject("");
       setSelectedAreaId("");
+      setSelectedSubareaId("");
       setAreaName("");
       setSubareaName("");
       setActions("");
+    };
+
+    if (!claim) {
+      resetForm();
+      return;
+    }
+
+    const isEditing = Boolean(claim._id);
+
+    // Campos comunes
+    setDescription(claim.description ?? "");
+    setClaimTypeId(String(claim.claimType ?? ""));
+    setCriticalityId(String(claim.criticality ?? ""));
+    setPriorityId(String(claim.priority ?? ""));
+    setProject(String(claim.project?._id ?? ""));
+    setActions(""); // siempre vacío al abrir
+
+    if (!isEditing) {
+      setStatusId("");
+      setSelectedAreaId("");
+      setSelectedSubareaId("");
+      setAreaName("");
+      setSubareaName("");
+      return;
+    }
+
+    // Edición
+    setClaimId(claim._id);
+    setStatusId(String(claim.claimStatus ?? ""));
+
+    const areaName = claim.subarea?.area?.name;
+    const subareaName = claim.subarea?.name;
+
+    if (!areaName || !subareaName) {
+      setSelectedAreaId("");
+      setSelectedSubareaId("");
+      setAreaName("");
+      setSubareaName("");
+      return;
+    }
+
+    const foundArea = areas.find(a => a.name === areaName);
+
+    if (!foundArea) {
+      setSelectedAreaId("");
+      setSelectedSubareaId("");
+      return;
+    }
+
+    setSelectedAreaId(foundArea._id);
+    setAreaName(foundArea.name);
+
+    const foundSubarea = foundArea.subareas?.find(
+      (s: Subarea) => s.name === subareaName
+    );
+    
+    if (foundSubarea) {
+      setSelectedSubareaId(foundSubarea._id);
+      setSubareaName(foundSubarea.name);
+    } else {
+      setSelectedSubareaId("");
+      setSubareaName("");
     }
   }, [claim, open, areas]);
+
 
   const handleFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const list = e.target.files;
@@ -306,22 +292,16 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         setErrors(fieldErrors);
         return;
       }
-      // remove `id` and `area` from parsed data before sending
-      // Build a correctly typed object instead of directly spreading parsed.data
-      const toSave: Partial<Claim> = {
+      const toSave: UpdateClaim = {
         _id: claim._id,
-        description: parsed.data.description,
-        // cast string values to the specific enum types expected by the backend types
         claimType: claimTypeId ? (claimTypeId as unknown as ClaimType) : undefined,
         criticality: criticalityId ? (criticalityId as unknown as Criticality) : undefined,
         priority: priorityId ? (priorityId as unknown as Priority) : undefined,
-        // backend expects `project` as id string
-        project: project,
-        // backend expects `subarea` as id (do NOT send `area`)
-        subarea: selectedSubareaId ? { _id: selectedSubareaId } : undefined,
+        subarea: selectedSubareaId ?? undefined,
         claimStatus: statusId ? (statusId as unknown as ClaimStatus) : claim.claimStatus,
-        actions: actions || undefined,
+        actions: actions,
       };
+      console.log("Updating claim with data:", toSave);
       const { success, message } = await claimService.updateClaimById(
         token,
         toSave
@@ -354,19 +334,13 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         return;
       }
 
-      // Build a correctly typed object for creation instead of spreading parsed.data
-      const toSave: Partial<Claim> = {
+      const toSave: CreateClaim = {
         description: parsed.data.description,
-        // cast string values to the specific enum types expected by the backend types
-        claimType: claimTypeId ? (claimTypeId as unknown as ClaimType) : undefined,
-        criticality: criticalityId ? (criticalityId as unknown as Criticality) : undefined,
-        priority: priorityId ? (priorityId as unknown as Priority) : undefined,
-        // backend expects `project` as id string
-        project: { _id: project },
-        // backend expects `subarea` as id (do NOT send `area`)
+        claimType: claimTypeId,
+        criticality: criticalityId,
+        priority: priorityId,
+        project: project,
         subarea: selectedSubareaId ? { _id: selectedSubareaId } : undefined,
-        claimStatus: statusId ? (statusId as unknown as ClaimStatus) : ClaimStatus.PENDING,
-        actions: actions || undefined,
         attachments: files.length ? files : undefined,
       };
 

@@ -15,13 +15,33 @@ export interface Attachment {
 
 export interface Claim {
   _id: string;
-  claimStatus?: Partial<ClaimStatus>;
+  claimStatus?: ClaimStatus;
   description: string;
   claimType?: ClaimType;
   criticality: Criticality;
   priority: Priority;
-  project: Partial<Project>;
+  project?: Partial<Project>;
   subarea?: Partial<Subarea>;
   actions?: string;
   attachments?: Attachment[];
+}
+
+export interface CreateClaim {
+  description: string;
+  claimType: string;
+  criticality: string;
+  priority: string;
+  project: string;
+  subarea?: Partial<Subarea>;
+  attachments?: Attachment[];
+}
+
+export interface UpdateClaim{
+  _id: string;
+  claimStatus?: ClaimStatus;
+  claimType?: ClaimType;
+  criticality?: Criticality;
+  priority?: Priority;
+  subarea?: string;
+  actions: string;
 }

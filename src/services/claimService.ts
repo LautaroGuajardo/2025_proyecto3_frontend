@@ -1,5 +1,5 @@
 import { apiEndpoints } from "@/api/endpoints";
-import type { Claim } from "@/types/Claim";
+import type { Claim, CreateClaim, UpdateClaim } from "@/types/Claim";
 import type { IClaimService } from "@/services/interfaces/IClaimService";
 
 class ClaimServiceReal implements IClaimService {
@@ -34,7 +34,7 @@ class ClaimServiceReal implements IClaimService {
 
   async createClaim(
     token: string,
-    claim: Partial<Claim>
+    claim: CreateClaim
   ): Promise<{ success: boolean; message?: string; claim?: Claim }> {
     try {
       const response = await fetch(apiEndpoints.claims.CREATE_CLAIM, {
@@ -66,7 +66,7 @@ class ClaimServiceReal implements IClaimService {
 
   async updateClaimById(
     token: string,
-    claim: Partial<Claim>
+    claim: UpdateClaim
   ): Promise<{ success: boolean; message?: string; claim?: Claim }> {
     try {
       const response = await fetch(
