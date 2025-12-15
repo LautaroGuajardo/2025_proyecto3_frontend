@@ -78,6 +78,7 @@ export default function Claims() {
     setClaims([...claims]);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getLabel = (item: any) => {
     if (!item && item !== 0) return "";
     if (typeof item === "string") return item;
@@ -88,6 +89,7 @@ export default function Claims() {
     return String(item);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getPriorityValue = (priority: any) => {
     if (!priority && priority !== 0) return "";
     if (typeof priority === "string") return priority;
@@ -114,7 +116,7 @@ export default function Claims() {
         ((c._id || "").toLowerCase().includes(q)) ||
         (c.description || "").toLowerCase().includes(q) ||
         (c.claimType || "").toLowerCase().includes(q) ||
-        (c.area?.name || "").toLowerCase().includes(q)
+        (c.subarea?.area?.name || "").toLowerCase().includes(q)
       );
     });
   }, [claims, search, statusFilter]);
@@ -226,8 +228,8 @@ export default function Claims() {
                           </span>
                         </TableCell>
                         <TableCell>{getLabel(claim.claimStatus)}</TableCell>
-                        {!isCustomer && <TableCell>{claim.area?.subarea?.name ?? "-"}</TableCell>}
-                        <TableCell>{claim.area?.name ?? "-"}</TableCell>
+                        {!isCustomer && <TableCell>{claim.subarea?.name ?? "-"}</TableCell>}
+                        <TableCell>{claim.subarea?.area?.name ?? "-"}</TableCell>
                         <TableCell className="text-center space-x-2">
                           <MoreDetailsButton
                             handleViewDetails={() => {

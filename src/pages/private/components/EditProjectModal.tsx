@@ -45,20 +45,30 @@ export default function EditProjectModal({
   >({});
 
   useEffect(() => {
-    if (isEdit && project) {
-      setForm({
-        _id: project._id,
-        title: project.title,
-        description: project.description || "",
-        projectType:
-          typeof project.projectType === "string"
-            ? project.projectType
-            : project.projectType,
-      });
-    } else {
-      setForm({ _id: "", title: "", description: "", projectType: "" });
-    }
-  }, [isEdit, project]);
+    const nextForm = isEdit && project
+      ? {
+          _id: project._id,
+          title: project.title,
+          description: project.description || "",
+          projectType:
+            typeof project.projectType === "string"
+              ? project.projectType
+              : project.projectType,
+        }
+      : { _id: "", title: "", description: "", projectType: "" };
+
+    const isSame =
+      form._id === nextForm._id &&
+      form.title === nextForm.title &&
+      form.description === nextForm.description &&
+      form.projectType === nextForm.projectType;
+
+    if (isSame) return;
+
+    // Defer the state update so it doesn't run synchronously inside the effect
+    const t = setTimeout(() => setForm(nextForm), 0);
+    return () => clearTimeout(t);
+  }, [isEdit, project, form]);
 
   const handleChange = (
     e: React.ChangeEvent<

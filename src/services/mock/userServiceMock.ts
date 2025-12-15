@@ -125,7 +125,7 @@ class UserServiceMock implements IUserService {
           success: false,
           message: "Usuario no encontrado (mock)",
         });
-      const userWithId: User = { _id: user._id, ...user };
+      const userWithId: User = { ...user };
       return Promise.resolve({ success: true, user: userWithId });
     } catch {
       return Promise.resolve({

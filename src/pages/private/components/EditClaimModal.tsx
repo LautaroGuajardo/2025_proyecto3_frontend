@@ -115,11 +115,11 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         
         // runtime type guards to avoid unsafe casting
         const isObject = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object";
-        const hasName = (v: unknown): v is { name: unknown } => isObject(v) && "name" in v;
+        //const hasName = (v: unknown): v is { name: unknown } => isObject(v) && "name" in v;
 
-        if (typeof claim.area === "string") {
+        if (typeof claim.subarea?.area === "string") {
           // si el area viene como string (antiguo) lo tratamos como nombre
-          const claimAreaStr = claim.area;
+          const claimAreaStr = claim.subarea.area;
           setAreaName(claimAreaStr);
           const foundArea = areas.find(a => a.name === claimAreaStr);
           if (foundArea) {
@@ -127,8 +127,8 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
           } else {
             setSelectedAreaId("");
           }
-        } else if (isObject(claim.area)) {
-          const areaObj = claim.area as Record<string, unknown>;
+        } else if (isObject(claim.subarea?.area)) {
+          const areaObj = claim.subarea.area as Record<string, unknown>;
           // preferimos el _id cuando esté disponible
           if ("_id" in areaObj && areaObj._id) {
             setSelectedAreaId(String(areaObj._id));
@@ -295,15 +295,19 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         return;
       }
       // remove `id` and `area` from parsed data before sending
-      const { id: _dropId, area: _dropArea, ...cleaned } = parsed.data as any;
+      // Build a correctly typed object instead of directly spreading parsed.data
       const toSave: Partial<Claim> = {
-        ...cleaned,
         _id: claim._id,
+        description: parsed.data.description,
+        // cast string values to the specific enum types expected by the backend types
+        claimType: claimTypeId ? (claimTypeId as unknown as ClaimType) : undefined,
+        criticality: criticalityId ? (criticalityId as unknown as Criticality) : undefined,
+        priority: priorityId ? (priorityId as unknown as Priority) : undefined,
         // backend expects `project` as id string
-        project: project,
+        project: { _id: project },
         // backend expects `subarea` as id (do NOT send `area`)
-        subarea: selectedSubareaId || undefined,
-        claimStatus: statusId || claim.claimStatus,
+        subarea: selectedSubareaId ? { _id: selectedSubareaId } : undefined,
+        claimStatus: statusId ? (statusId as unknown as ClaimStatus) : claim.claimStatus,
         actions: actions || undefined,
       };
       const { success, message } = await claimService.updateClaimById(
@@ -339,25 +343,25 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
       }
 
       // remove `id` and `area` from parsed data before sending
-      const { id: _dropId2, area: _dropArea2, ...cleanedCreate } = parsed.data as any;
+      const { ...cleanedCreate } = parsed.data;
       const toSave: Partial<Claim> = {
         ...cleanedCreate,
         // backend expects `project` as id string
-        project: project,
+        project: { _id: project },
         // backend expects `subarea` as id (do NOT send `area`)
-        subarea: selectedSubareaId || undefined,
-        claimStatus: statusId || ClaimStatus.PENDING,
+        subarea: selectedSubareaId ? { _id: selectedSubareaId } : undefined,
+        claimStatus: statusId ? (statusId as unknown as Partial<ClaimStatus>) : (ClaimStatus.PENDING as unknown as Partial<ClaimStatus>),
         actions: actions || undefined,
         attachments: files.length ? files : undefined,
       };
 
-      const { success, message } = await claimService.createClaim(
+      const { success } = await claimService.createClaim(
         token,
         toSave
       );
 
       if (!success) {
-        toast.error(message || "Error al crear reclamo");
+        toast.error("Error al crear reclamo");
         return;
       }
 
@@ -368,7 +372,7 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
     onOpenChange(false);
 
   } catch (err) {
-    toast.error(err?.message || "Error inesperado");
+    toast.error(err?.toString() || "Error inesperado");
   } finally {
     setLoading(false);
   }

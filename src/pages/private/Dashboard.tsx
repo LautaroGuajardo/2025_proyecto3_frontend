@@ -40,7 +40,7 @@ export default function Dashboard() {
         ]);
 
         if (claimsRes.success && claimsRes.claims) {
-          const normalized = claimsRes.claims.map((c: Claim) => ({ ...c, id: String(c.id) }));
+          const normalized = claimsRes.claims.map((c: Claim) => ({ ...c, id: String(c._id) }));
           setClaims(normalized);
 
           const allHistories: ClaimHistory[] = [];
@@ -52,7 +52,7 @@ export default function Dashboard() {
         }
 
         if (projectsRes.success && projectsRes.projects)
-          setProjects(projectsRes.projects.map((p: Project) => ({ ...p, id: String(p.id) })));
+          setProjects(projectsRes.projects.map((p: Project) => ({ ...p, id: String(p._id) })));
 
         if (usersRes.success && usersRes.users) setUsers(usersRes.users);
       } catch (error) {
@@ -74,8 +74,8 @@ export default function Dashboard() {
   const monthlyClaims = useMemo(() => {
     const counts: Record<string, number> = {};
     histories.forEach((h) => {
-      if (!h.startDateHour) return;
-      const date = new Date(h.startDateHour);
+      if (!h.startDate) return;
+      const date = new Date(h.startDate);
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       counts[key] = (counts[key] || 0) + 1;
     });
@@ -89,9 +89,9 @@ export default function Dashboard() {
     const aggregates: Record<string, { totalMs: number; count: number }> = {};
 
     histories.forEach((h) => {
-      if (!h.endDateHour || !h.startDateHour) return;
-      const start = new Date(h.startDateHour).getTime();
-      const end = new Date(h.endDateHour).getTime();
+      if (!h.endDate || !h.startDate) return;
+      const start = new Date(h.startDate).getTime();
+      const end = new Date(h.endDate).getTime();
       if (isNaN(start) || isNaN(end) || end < start) return;
       const diffMs = end - start;
       const key = String(h.claimType ?? "Desconocido");
@@ -108,7 +108,7 @@ export default function Dashboard() {
   const workloadByArea = useMemo(() => {
     const load: Record<string, number> = {};
     histories.forEach((h) => {
-      const area = h.area || "Sin área";
+      const area = h.subarea?.area.name || "Sin área";
       load[area] = (load[area] || 0) + 1;
     });
     return Object.entries(load).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
@@ -125,9 +125,9 @@ export default function Dashboard() {
 
   const statusCounts = useMemo(() => {
     return [
-      { name: "Pendiente", value: claims.filter((c) => c.claimStatus === ClaimStatus.PENDIENTE).length },
-      { name: "Progreso", value: claims.filter((c) => c.claimStatus === ClaimStatus.PROGRESO).length },
-      { name: "Resuelto", value: claims.filter((c) => c.claimStatus === ClaimStatus.RESUELTO).length },
+      { name: "PENDING", value: claims.filter((c) => c.claimStatus === ClaimStatus.PENDING).length },
+      { name: "IN_PROGRESS", value: claims.filter((c) => c.claimStatus === ClaimStatus.IN_PROGRESS).length },
+      { name: "RESOLVED", value: claims.filter((c) => c.claimStatus === ClaimStatus.RESOLVED).length },
     ];
   }, [claims]);
 
@@ -142,7 +142,7 @@ export default function Dashboard() {
             <div className="text-sm text-muted-foreground">Reclamos</div>
             <div className="text-2xl font-semibold mt-2">{claimCounts.total}</div>
             <div className="text-xs text-muted-foreground mt-1">
-              Pendientes: {claimCounts.pendiente} • En progreso: {claimCounts.progreso} • Resueltos: {claimCounts.resuelto}
+              Pendientes: {claimCounts.pending} • En progreso: {claimCounts.inProgress} • Resueltos: {claimCounts.resolved}
             </div>
           </CardContent>
         </Card>

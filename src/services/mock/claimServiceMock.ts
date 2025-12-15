@@ -18,8 +18,14 @@ export const CLAIMS: Claim[] = [
     criticality: Criticality.BLOCKER,
     priority: Priority.URGENT,
     project: PROJECTS[0],
-    area: "Soporte",
-    subarea: "Red",
+    subarea: {
+      _id: "1",
+      name:"Red",
+      area: {
+        _id: "1",
+        name: "Soporte",
+      }
+    }
   },
   {
     _id: "2",
@@ -29,8 +35,14 @@ export const CLAIMS: Claim[] = [
     criticality: Criticality.BLOCKER,
     priority: Priority.URGENT,
     project: PROJECTS[0],
-    area: "Soporte",
-    subarea: "Red",
+    subarea: {
+      _id: "1",
+      name:"Red",
+      area: {
+        _id: "1",
+        name: "Soporte",
+      }
+    },
   },
   {
     _id: "3",
@@ -40,8 +52,14 @@ export const CLAIMS: Claim[] = [
     criticality: Criticality.BLOCKER,
     priority: Priority.URGENT,
     project: PROJECTS[0],
-    area: "Soporte",
-    subarea: "Red",
+    subarea: {
+      _id: "1",
+      name:"Red",
+      area: {
+        _id: "1",
+        name: "Soporte",
+      }
+    },
   },
   {
     _id: "4",
@@ -51,8 +69,14 @@ export const CLAIMS: Claim[] = [
     criticality: Criticality.BLOCKER,
     priority: Priority.URGENT,
     project: PROJECTS[0],
-    area: "Soporte",
-    subarea: "Red",
+    subarea: {
+      _id: "1",
+      name:"Red",
+      area: {
+        _id: "1",
+        name: "Soporte",
+      }
+    },
   },
   {
     _id: "5",
@@ -62,8 +86,14 @@ export const CLAIMS: Claim[] = [
     criticality: Criticality.BLOCKER,
     priority: Priority.URGENT,
     project: PROJECTS[0],
-    area: "Soporte",
-    subarea: "Red",
+    subarea: {
+      _id: "1",
+      name:"Red",
+      area: {
+        _id: "1",
+        name: "Soporte",
+      }
+    },
   },
   {
     _id: "6",
@@ -73,8 +103,14 @@ export const CLAIMS: Claim[] = [
     criticality: Criticality.BLOCKER,
     priority: Priority.URGENT,
     project: PROJECTS[0],
-    area: "Soporte",
-    subarea: "Red",
+    subarea: {
+      _id: "1",
+      name:"Red",
+      area: {
+        _id: "1",
+        name: "Soporte",
+      }
+    },
   },
   {
     _id: "7",
@@ -84,8 +120,14 @@ export const CLAIMS: Claim[] = [
     criticality: Criticality.BLOCKER,
     priority: Priority.URGENT,
     project: PROJECTS[0],
-    area: "Soporte",
-    subarea: "Red",
+    subarea: {
+      _id: "1",
+      name:"Red",
+      area: {
+        _id: "1",
+        name: "Soporte",
+      }
+    },
   },
   {
     _id: "8",
@@ -95,8 +137,14 @@ export const CLAIMS: Claim[] = [
     criticality: Criticality.BLOCKER,
     priority: Priority.URGENT,
     project: PROJECTS[0],
-    area: "Soporte",
-    subarea: "Red",
+    subarea: {
+      _id: "1",
+      name:"Red",
+      area: {
+        _id: "1",
+        name: "Soporte",
+      }
+    },
   },
   {
     _id: "9",
@@ -106,8 +154,14 @@ export const CLAIMS: Claim[] = [
     criticality: Criticality.BLOCKER,
     priority: Priority.URGENT,
     project: PROJECTS[0],
-    area: "Soporte",
-    subarea: "Red",
+    subarea: {
+      _id: "1",
+      name:"Red",
+      area: {
+        _id: "1",
+        name: "Soporte",
+      }
+    },
   },
   {
     _id: "10",
@@ -117,8 +171,14 @@ export const CLAIMS: Claim[] = [
     criticality: Criticality.BLOCKER,
     priority: Priority.URGENT,
     project: PROJECTS[0],
-    area: "Soporte",
-    subarea: "Red",
+    subarea: {
+      _id: "1",
+      name:"Red",
+      area: {
+        _id: "1",
+        name: "Soporte",
+      }
+    },
   },
   {
     _id: "11",
@@ -128,8 +188,14 @@ export const CLAIMS: Claim[] = [
     criticality: Criticality.BLOCKER,
     priority: Priority.URGENT,
     project: PROJECTS[0],
-    area: "Soporte",
-    subarea: "Red",
+    subarea: {
+      _id: "1",
+      name:"Red",
+      area: {
+        _id: "1",
+        name: "Soporte",
+      }
+    },
   },
 ];
 
@@ -151,19 +217,19 @@ class ClaimServiceMock implements IClaimService {
     };
     CLAIMS.push(newClaim);
     // ESTO AGREGA LA PRIMER ENTRADA AL HISTORIAL
-    const historyEntry: ClaimHistory = {
-      _id: String(Date.now()),
-      claimId: newClaim._id,
-      claimStatus: ClaimStatus.PENDING,
-      priority: newClaim.priority,
-      criticality: newClaim.criticality,
-      action: "Creación de reclamo",
-      area: newClaim.area ?? "",
-      subarea: newClaim.subarea ?? "",
-      startDateHour: new Date(),
-      endDateHour: undefined,
-    };
-    appendClaimHistoryMock(historyEntry);
+            const historyEntry: ClaimHistory = {
+              _id: String(Date.now()),
+              claim: newClaim._id,
+              claimStatus: ClaimStatus.PENDING,
+              priority: newClaim.priority,
+              criticality: newClaim.criticality,
+              action: "Creación de reclamo",
+              user: undefined,
+              subarea: (newClaim.subarea) as ClaimHistory['subarea'],
+              startDate: new Date(),
+              endDate: undefined,
+            };
+            appendClaimHistoryMock(historyEntry);
 
     return { success: true, claim: newClaim };
   }
@@ -176,20 +242,19 @@ class ClaimServiceMock implements IClaimService {
     CLAIMS[idx] = updated;
 
     // ESTO AGREGA EL CAMBIO AL HISTORIAL
-    const historyEntry: ClaimHistory = {
-      id: String(Date.now()),
-      claimId: updated._id,
-      claimStatus: updated.claimStatus,
-      priority: updated.priority,
-      criticality: updated.criticality,
-      action: updated.actions,
-      user: USERS[0],
-      area: updated.area ?? previous.area ?? "",
-      subarea: updated.subarea ?? previous.subarea ?? "",
-      startDateHour: new Date(),
-      endDateHour: undefined,
-    };
-    appendClaimHistoryMock(historyEntry);
+        const historyEntry: ClaimHistory = {
+          _id: String(Date.now()),
+          claim: updated._id,
+          claimStatus: updated.claimStatus ?? previous.claimStatus ?? ClaimStatus.PENDING,
+          priority: updated.priority,
+          criticality: updated.criticality,
+          action: "Actualización de reclamo",
+          user: USERS[0],
+          subarea: (updated.subarea ?? previous.subarea) as ClaimHistory['subarea'],
+          startDate: new Date(),
+          endDate: undefined,
+        };
+        appendClaimHistoryMock(historyEntry);
     return { success: true, claim: CLAIMS[idx] };
   } 
 }

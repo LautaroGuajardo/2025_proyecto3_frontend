@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "react-toastify";
 
 import {
@@ -69,7 +69,7 @@ const createUserSchema = z
 
 const editUserSchema = z.object({
   email: z.string().email("El email no es válido"),
-  role: z.string().nonempty("El rol es obligatorio"),
+  role: z.nativeEnum(Role),
 });
 
 export default function EditUserModal({
@@ -95,34 +95,57 @@ export default function EditUserModal({
     setShowConfirmPassword((prev) => !prev);
 
   useEffect(() => {
-    if (isEdit && user) {
-      setForm({
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-        email: user.email || "",
-        role: user.role || "USER",
-        phone: user.phone || "",
-      });
-    } else {
-      setForm(initialFormState);
-      setPassword("");
-      setConfirmPassword("");
-    }
-    setErrors({});
-  }, [isEdit, user, open]);
+    // avoid synchronous setState within effect; guard by `open`
+    if (!open) return;
+    const timeoutId = setTimeout(() => {
+      if (isEdit && user) {
+        const nextForm = {
+          firstName: user.firstName || "",
+          lastName: user.lastName || "",
+          email: user.email || "",
+          role: user.role || "USER",
+          phone: user.phone || "",
+        };
+        setForm((prev) => {
+          const same =
+            prev.firstName === nextForm.firstName &&
+            prev.lastName === nextForm.lastName &&
+            prev.email === nextForm.email &&
+            prev.role === nextForm.role &&
+            prev.phone === nextForm.phone;
+          return same ? prev : nextForm;
+        });
+      } else {
+        setForm((prev) => {
+          const same =
+            prev.firstName === initialFormState.firstName &&
+            prev.lastName === initialFormState.lastName &&
+            prev.email === initialFormState.email &&
+            prev.role === initialFormState.role &&
+            prev.phone === initialFormState.phone;
+          return same ? prev : initialFormState;
+        });
+        if (password) setPassword("");
+        if (confirmPassword) setConfirmPassword("");
+      }
+      // Clear errors only if present, avoid redundant state updates
+      setErrors((prev) => (Object.keys(prev).length ? {} : prev));
+    }, 0);
+    return () => clearTimeout(timeoutId);
+  }, [isEdit, user, open, password, confirmPassword]);
 
-  const handleSelectChange = (
-    field: keyof UserFormData,
-    value: string | boolean
-  ) => {
-    setForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-    if (errors[field as keyof typeof errors]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
-  };
+  const handleSelectChange = useCallback(
+    (field: keyof UserFormData, value: string | boolean) => {
+      setForm((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+      setErrors((prev) =>
+        prev[field as keyof typeof prev] ? { ...prev, [field]: undefined } : prev,
+      );
+    },
+    [],
+  );
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();

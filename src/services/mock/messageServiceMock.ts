@@ -28,6 +28,7 @@ class MessageServiceMock implements IMessageService {
     message: Message,
   ): Promise<{ success: boolean; message: Message }> {
     MESSAGES.push({...message, _id: (MESSAGES.length + 1).toString() });
+    void token; // Evitar warning de variable no usada
     return {
       success: true,
       message: {
@@ -42,6 +43,7 @@ class MessageServiceMock implements IMessageService {
     token: string,
     claimId: string
   ): Promise<{ success: boolean; message: Message[] }> {
+    void token; // Evitar warning de variable no usada
     return {
       success: true,
       message: MESSAGES.filter(msg => msg.claimId === claimId),

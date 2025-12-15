@@ -72,9 +72,9 @@ export default function ClaimHistory() {
     const list = [...filtered];
     switch (orderBy) {
       case "startAsc":
-        return list.sort((a, b) => (new Date(a.startTime || 0).getTime() - new Date(b.startTime || 0).getTime()));
+        return list.sort((a, b) => (new Date(a.startDate || 0).getTime() - new Date(b.startDate || 0).getTime()));
       case "startDesc":
-        return list.sort((a, b) => (new Date(b.startTime || 0).getTime() - new Date(a.startTime || 0).getTime()));
+        return list.sort((a, b) => (new Date(b.startDate || 0).getTime() - new Date(a.startDate || 0).getTime()));
       case "latest":
       default:
         return list;
@@ -168,11 +168,11 @@ export default function ClaimHistory() {
                       <TableCell>{h.action || "-"}</TableCell>
                       <TableCell>{h.priority}</TableCell>
                       <TableCell>{h.criticality}</TableCell>
-                      <TableCell>{h.area?.name ?? (h.area?.name ?? "-")}</TableCell>
-                      {!isCustomer && <TableCell>{h.area?.subarea?.name ?? (h.area?.subarea?.name ?? "-")}</TableCell>}
+                      <TableCell>{h.subarea?.area.name ?? (h.subarea?.area?.name ?? "-")}</TableCell>
+                      {!isCustomer && <TableCell>{h.subarea?.name ?? (h.subarea?.name ?? "-")}</TableCell>}
                       <TableCell>{h.claimStatus ?? "-"}</TableCell>
-                      <TableCell>{fmt(h.startTime)}</TableCell>
-                      <TableCell>{fmt(h.endTime)}</TableCell>
+                      <TableCell>{fmt(h.startDate)}</TableCell>
+                      <TableCell>{fmt(h.endDate)}</TableCell>
                     </TableRow>
                   ))
                 )}
