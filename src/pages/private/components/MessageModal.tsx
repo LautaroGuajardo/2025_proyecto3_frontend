@@ -36,12 +36,19 @@ export default function MessageModal({ open, onOpenChange, claimId }: Props) {
       return;
     }
     if (!claimId) return;
-    const { success, message } = await messageService.getMessagesByClaimId(token, claimId);
-    if (!success) {
-      toast.error(String(message) || "Error al obtener mensajes");
+    const response = await messageService.getMessagesByClaimId(token, claimId);
+    // response can be one of two shapes; check success first
+    if (!response.success) {
+      toast.error(String(response.message) || "Error al obtener mensajes");
       return;
     }
-    setMessages(message);
+    // normalize messages: either response.mensajes or response.message (when it holds an array)
+    const mensajes: Message[] = "mensajes" in response
+      ? response.mensajes ?? []
+      : Array.isArray(response.message)
+      ? response.message
+      : [];
+    setMessages(mensajes || []);
   };
 
   useEffect(() => {
@@ -135,7 +142,7 @@ export default function MessageModal({ open, onOpenChange, claimId }: Props) {
               <div key={m._id} className="border rounded-md p-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-semibold">{m.name} {m.lastname}</div>
-                  <div className="text-xs text-muted-foreground">{new Date(m.timestamp).toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">{m.timestamp ? new Date(m.timestamp).toLocaleString() : ""}</div>
                 </div>
                 <div className="text-sm mt-1">{m.content}</div>
                 <div className="text-xs mt-1 text-blue-600">{m.state}</div>

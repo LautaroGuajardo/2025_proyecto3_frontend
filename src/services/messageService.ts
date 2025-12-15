@@ -5,24 +5,23 @@ import type { IMessageService } from "./interfaces/IMessageService";
 class MessageServiceReal implements IMessageService {
   async sendMessage(
     token: string,
-    message: Message,
-  ): Promise<{ success: boolean; message: Message }> {
+    mensaje: Message,
+  ): Promise<{ success: boolean; message: string }> {
     try {
-      const response = await fetch(apiEndpoints.messages.SEND_MESSAGE(message.claimId), {
+      const response = await fetch(apiEndpoints.messages.SEND_MESSAGE(mensaje.claimId), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(message),
+        body: JSON.stringify(mensaje),
       });
 
       if (!response.ok) {
         throw new Error("Error al enviar el mensaje");
       }
 
-      const savedMessage: Message = await response.json();
-      return { success: true, message: savedMessage };
+      return { success: true, message: "Mensaje enviado correctamente" };
     } catch (error) {
       return {
         success: false,
@@ -34,7 +33,7 @@ class MessageServiceReal implements IMessageService {
   async getMessagesByClaimId(
     token: string,
     claimId: string
-  ): Promise<{ success: boolean; message: Message[] }> {
+  ): Promise<{ success: boolean; message?: string; mensajes?: Message[] }> {
     try {
       const response = await fetch(
         apiEndpoints.messages.GET_MESSAGES_BY_CLAIM_ID(claimId),
@@ -50,7 +49,7 @@ class MessageServiceReal implements IMessageService {
         }
 
       const messages: Message[] = await response.json();
-      return { success: true, message: messages };
+      return { success: true, mensajes: messages };
     } catch (error) {
       return {
         success: false,

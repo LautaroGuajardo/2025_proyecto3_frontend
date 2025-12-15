@@ -26,27 +26,24 @@ class MessageServiceMock implements IMessageService {
   async sendMessage(
     token: string,
     message: Message,
-  ): Promise<{ success: boolean; message: Message }> {
-    MESSAGES.push({...message, _id: (MESSAGES.length + 1).toString() });
+  ): Promise<{ success: boolean; message: string }> {
+    const newId = (MESSAGES.length + 1).toString();
+    MESSAGES.push({ ...message, _id: newId });
     void token; // Evitar warning de variable no usada
     return {
       success: true,
-      message: {
-        ...message,
-        _id: "mocked-message-id",
-        timestamp: new Date(),
-      },
+      message: newId,
     };
   }
 
   async getMessagesByClaimId(
     token: string,
     claimId: string
-  ): Promise<{ success: boolean; message: Message[] }> {
+  ): Promise<{ success: boolean; message?: string; mensajes?: Message[] }> {
     void token; // Evitar warning de variable no usada
     return {
       success: true,
-      message: MESSAGES.filter(msg => msg.claimId === claimId),
+      mensajes: MESSAGES.filter(msg => msg.claimId === claimId),
     };
   }
 }

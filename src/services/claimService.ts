@@ -70,7 +70,7 @@ class ClaimServiceReal implements IClaimService {
   ): Promise<{ success: boolean; message?: string; claim?: Claim }> {
     try {
       const response = await fetch(
-        apiEndpoints.claims.UPDATE_CLAIM_BY_ID(claim._id),
+        apiEndpoints.claims.UPDATE_CLAIM_BY_ID(claim._id?.toString() || ""),
         {
           method: "PATCH",
           headers: {

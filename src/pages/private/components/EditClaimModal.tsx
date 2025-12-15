@@ -92,7 +92,19 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
       ]);
 
       if (projRes.success && projRes.projects) setProjects(projRes.projects.map((c)=> ({...c, id: String((c)._id)})));
-      if (areasRes.success && areasRes.areas) setAreas(areasRes.areas);
+      if (areasRes.success && areasRes.areas) {
+        // normalize incoming areas so each subarea includes a reference to its parent area
+        // (the Subarea type requires an `area` property)
+        const normalized = areasRes.areas.map((a) => ({
+          ...a,
+          subareas: (a.subareas || []).map((s) => ({
+            ...s,
+            // provide a minimal area object for the subarea to satisfy the Subarea.type
+            area: { _id: a._id, name: a.name, subareas: []},
+          })),
+        }));
+        setAreas(normalized);
+      }
     };
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -342,15 +354,18 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         return;
       }
 
-      // remove `id` and `area` from parsed data before sending
-      const { ...cleanedCreate } = parsed.data;
+      // Build a correctly typed object for creation instead of spreading parsed.data
       const toSave: Partial<Claim> = {
-        ...cleanedCreate,
+        description: parsed.data.description,
+        // cast string values to the specific enum types expected by the backend types
+        claimType: claimTypeId ? (claimTypeId as unknown as ClaimType) : undefined,
+        criticality: criticalityId ? (criticalityId as unknown as Criticality) : undefined,
+        priority: priorityId ? (priorityId as unknown as Priority) : undefined,
         // backend expects `project` as id string
         project: { _id: project },
         // backend expects `subarea` as id (do NOT send `area`)
         subarea: selectedSubareaId ? { _id: selectedSubareaId } : undefined,
-        claimStatus: statusId ? (statusId as unknown as Partial<ClaimStatus>) : (ClaimStatus.PENDING as unknown as Partial<ClaimStatus>),
+        claimStatus: statusId ? (statusId as unknown as ClaimStatus) : ClaimStatus.PENDING,
         actions: actions || undefined,
         attachments: files.length ? files : undefined,
       };

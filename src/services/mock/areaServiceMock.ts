@@ -1,4 +1,5 @@
 import type { IAreaService } from "@/services/interfaces/IAreaService";
+import type { Area } from "@/types/Area";
 
 export const AREAS = [
   {
@@ -47,9 +48,9 @@ export const AREAS = [
 ]
 
 class AreaServiceMock implements IAreaService {
-  async getAllAreas(_token: string) {
+  async getAllAreas(_token: string): Promise<{ success: boolean; message?: string; areas?: Area[] }> {
     void _token; // Evitar warning de variable no usada
-    return { success: true, areas: AREAS };
+    return { success: true, areas: AREAS as unknown as Area[] };
   }
 }
 

@@ -3,6 +3,7 @@ import type { LoginFormDto, LoginResponseDto } from "@/dto/LoginFormDto";
 import type { RegisterFormDto } from "@/dto/RegisterFormDto";
 import { Role } from "@/types/Role";
 import { USERS } from "./userServiceMock";
+import type { User } from "@/types/User";
 
 class AuthServiceMock implements IAuthService {
   async login(data: LoginFormDto): Promise<LoginResponseDto> {
@@ -34,7 +35,7 @@ class AuthServiceMock implements IAuthService {
       });
     }
 
-    const newUser: UserWithPassword = {
+    const newUser: User = {
       _id: (USERS.length + 1).toString(),
       email: data.email,
       firstName: data.firstName,
