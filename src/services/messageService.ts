@@ -1,12 +1,12 @@
 import { apiEndpoints } from "@/api/endpoints";
-import type { Message } from "../types/Message";
+import type { CreateMessage, Message } from "../types/Message";
 import type { IMessageService } from "./interfaces/IMessageService";
 
 class MessageServiceReal implements IMessageService {
   async sendMessage(
     token: string,
-    mensaje: Message,
-  ): Promise<{ success: boolean; message: string }> {
+    mensaje: CreateMessage,
+  ): Promise<{ success: boolean; message?: string }> {
     try {
       const response = await fetch(apiEndpoints.messages.SEND_MESSAGE(mensaje.claimId), {
         method: "POST",
@@ -14,7 +14,10 @@ class MessageServiceReal implements IMessageService {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(mensaje),
+        body: JSON.stringify({
+          content: mensaje.content,
+          state: mensaje.state,
+        }),
       });
 
       if (!response.ok) {

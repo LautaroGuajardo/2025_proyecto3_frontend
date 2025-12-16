@@ -1,6 +1,6 @@
 import type { IUserService } from "@/services/interfaces/IUserService";
 import { Role } from "@/types/Role";
-import type { User, UserFormData } from "@/types/User";
+import type { CreateUser, User, UserFormData } from "@/types/User";
 
 export const USERS: User[] = [
   {
@@ -50,11 +50,32 @@ export const USERS: User[] = [
   },
 ];
 
-export const appendUserMock = (entry: User) => {
-  USERS.push(entry);
-};
 
 class UserServiceMock implements IUserService {
+  async createUser(
+    token: string,
+    createUser: CreateUser
+  ): Promise<{ success: boolean; message?: string; user?: UserFormData }> {
+    const exists = USERS.some((u) => u.email === createUser.email);
+      if (exists) {
+        return Promise.resolve({
+          success: false,
+          message: "Usuario ya existente",
+        });
+      }
+    void token; // Evitar warning de variable no usada
+    const newUser: User = {
+      _id: String(Date.now()),
+      email: createUser.email,
+      firstName: createUser.firstName,
+      lastName: createUser.lastName,
+      role: createUser.role,
+      phone: createUser.phone,
+      password: createUser.password,
+    }
+    USERS.push(newUser);
+    return { success: true };
+  }
   updateUserProfile(
     _token: string,
     user: UserFormData
@@ -135,7 +156,7 @@ class UserServiceMock implements IUserService {
     }
   }
 
-  async updateUserByEmail(
+  async updateUserById(
     _token: string,
     user: Partial<UserFormData>
   ): Promise<{ success: boolean; user?: UserFormData; message?: string }> {

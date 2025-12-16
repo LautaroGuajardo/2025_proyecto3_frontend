@@ -10,6 +10,16 @@ export interface User {
   phone?: string;
 };
 
+export interface CreateUser {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  firstName: string;
+  lastName: string;
+  role: Role;
+  phone?: string;
+};
+
 export interface UserFormData {
   _id?: string;
   email: string;
@@ -17,4 +27,10 @@ export interface UserFormData {
   lastName: string;
   phone?: string;
   role: Role;
+}
+
+export interface UserMessage{
+  _id: string;
+  firstName: string;
+  lastName: string;
 }

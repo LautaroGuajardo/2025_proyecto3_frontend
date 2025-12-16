@@ -8,7 +8,7 @@ import { MessageSquare } from "lucide-react";
 import { toast } from "react-toastify";
 import useAuth from "@/hooks/useAuth";
 import { messageService } from "@/services/factories/messageServiceFactory";
-import type { Message } from "@/types/Message";
+import type { CreateMessage, Message } from "@/types/Message";
 import { Role } from "@/types/Role";
 
 type Props = {
@@ -18,15 +18,15 @@ type Props = {
 };
 
 export default function MessageModal({ open, onOpenChange, claimId }: Props) {
-  const { getAccessToken, role, name, lastname, logout } = useAuth();
+  const { getAccessToken, role, logout } = useAuth();
   const token = getAccessToken();
 
   const isCustomer = role === Role.CUSTOMER;
 
   const [messages, setMessages] = useState<Message[]>([]);
-  const [stateFilter, setStateFilter] = useState<string>(isCustomer ? "PUBLICO" : "PUBLICO");
+  const [stateFilter, setStateFilter] = useState<string>("PUBLICO");
   const [content, setContent] = useState("");
-  const [sendState, setSendState] = useState<string>(isCustomer ? "PUBLICO" : "PUBLICO");
+  const [sendState, setSendState] = useState<string>("PUBLICO");
   const [loading, setLoading] = useState(false);
 
   const loadMessages = async () => {
@@ -37,33 +37,30 @@ export default function MessageModal({ open, onOpenChange, claimId }: Props) {
     }
     if (!claimId) return;
     const response = await messageService.getMessagesByClaimId(token, claimId);
-    // response can be one of two shapes; check success first
     if (!response.success) {
       toast.error(String(response.message) || "Error al obtener mensajes");
       return;
     }
-    // normalize messages: either response.mensajes or response.message (when it holds an array)
-    const mensajes: Message[] = "mensajes" in response
-      ? response.mensajes ?? []
-      : Array.isArray(response.message)
-      ? response.message
-      : [];
-    setMessages(mensajes || []);
+
+    setMessages(response.mensajes ?? []);
   };
 
   useEffect(() => {
     if (open) {
       void loadMessages();
       setContent("");
-      setSendState(isCustomer ? "PUBLICO" : "PUBLICO");
+      setSendState("PUBLICO");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, claimId]);
 
   const filtered = useMemo(() => {
-    return messages.filter((m) => (isCustomer ? m.state === "PUBLICO" : (stateFilter ? m.state === stateFilter : true)) && (!claimId || m.claimId === claimId));
+    return messages.filter(
+      (m) =>
+        (isCustomer ? m.state === "PUBLICO" : (stateFilter ? m.state === stateFilter : true)) &&
+        (!claimId || m.claim === claimId)
+    );
   }, [messages, stateFilter, isCustomer, claimId]);
-
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) {
@@ -80,13 +77,9 @@ export default function MessageModal({ open, onOpenChange, claimId }: Props) {
       return;
     }
     setLoading(true);
-    const payload: Message = {
-      _id: "", // lo asigna el backend
+    const payload: CreateMessage = {
       claimId,
-      name,
-      lastname,
       content: content.trim(),
-      timestamp: new Date(),
       state: (isCustomer ? "PUBLICO" : (sendState)) as "PUBLICO" | "PRIVADO",
     };
     const { success, message } = await messageService.sendMessage(token, payload);
@@ -141,8 +134,8 @@ export default function MessageModal({ open, onOpenChange, claimId }: Props) {
             filtered.map((m) => (
               <div key={m._id} className="border rounded-md p-3">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold">{m.name} {m.lastname}</div>
-                  <div className="text-xs text-muted-foreground">{m.timestamp ? new Date(m.timestamp).toLocaleString() : ""}</div>
+                  <div className="text-sm font-semibold">{m.user.firstName} {m.user.lastName}</div>
+                  <div className="text-xs text-muted-foreground">{m.createdAt ? new Date(m.createdAt).toLocaleString() : ""}</div>
                 </div>
                 <div className="text-sm mt-1">{m.content}</div>
                 <div className="text-xs mt-1 text-blue-600">{m.state}</div>

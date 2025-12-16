@@ -1,6 +1,10 @@
-import type { User, UserFormData } from "@/types/User";
+import type { CreateUser, User, UserFormData } from "@/types/User";
 
 export interface IUserService {
+  createUser(
+    token: string,
+    user: CreateUser
+  ): Promise<{ success: boolean; message?: string; user?: UserFormData }>;
   getAllUsers(
     token: string
   ): Promise<{ success: boolean; message?: string; users?: UserFormData[] }>;
@@ -11,7 +15,7 @@ export interface IUserService {
   getUserProfile(
     token: string
   ): Promise<{ success: boolean; message?: string; user?: User }>;
-  updateUserByEmail(
+  updateUserById(
     token: string,
     user: Partial<UserFormData>
   ): Promise<{ success: boolean; message?: string; user?: UserFormData }>;

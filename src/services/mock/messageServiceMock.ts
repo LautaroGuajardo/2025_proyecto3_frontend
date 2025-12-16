@@ -1,23 +1,21 @@
-import type { Message } from "@/types/Message";
+import type { CreateMessage, Message } from "@/types/Message";
 import type { IMessageService } from "../interfaces/IMessageService";
 
 export const MESSAGES: Message[] = [
   {
     _id: "1",
-    claimId: "1",
-    name: "Juan",
-    lastname: "Perez",
+    claim: "1",
+    user: { _id: "mockUserId1", firstName: "Juan", lastName: "Perez" },
     content: "Hola, necesito ayuda con mi reclamo.",
-    timestamp: new Date(),
+    createdAt: new Date(),
     state: "PUBLICO",
   },
   {
     _id: "2",
-    claimId: "1",
-    name: "Soporte",
-    lastname: "Tecnico",
+    claim: "1",
+    user: { _id: "mockUserId2", firstName: "Soporte", lastName: "Tecnico" },
     content: "Hola Juan, ¿en qué podemos ayudarte?",
-    timestamp: new Date(),
+    createdAt: new Date(),
     state: "PRIVADO",
   },
 ];
@@ -25,10 +23,17 @@ export const MESSAGES: Message[] = [
 class MessageServiceMock implements IMessageService {
   async sendMessage(
     token: string,
-    message: Message,
-  ): Promise<{ success: boolean; message: string }> {
+    message: CreateMessage,
+  ): Promise<{ success: boolean; message?: string }> {
     const newId = (MESSAGES.length + 1).toString();
-    MESSAGES.push({ ...message, _id: newId });
+    MESSAGES.push({
+      _id: newId,
+      claim: message.claimId,
+      content: message.content,
+      createdAt: new Date(),
+      state: message.state,
+      user: { _id: "mockUserId", firstName: "Mock", lastName: "User" },
+    });
     void token; // Evitar warning de variable no usada
     return {
       success: true,
@@ -43,7 +48,7 @@ class MessageServiceMock implements IMessageService {
     void token; // Evitar warning de variable no usada
     return {
       success: true,
-      mensajes: MESSAGES.filter(msg => msg.claimId === claimId),
+      mensajes: MESSAGES.filter(msg => msg.claim === claimId),
     };
   }
 }

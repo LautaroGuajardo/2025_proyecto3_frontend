@@ -22,10 +22,8 @@ import { Label } from "@/components/ui/label";
 import { z } from "zod";
 
 import { userService } from "@/services/factories/userServiceFactory";
-import { createUserService } from "@/services/factories/createUserServiceFactory";
-const { updateUserByEmail } = userService;
-const { createUser } = createUserService;
-import type { User } from "@/types/User";
+const { updateUserById, createUser } = userService;
+import type { CreateUser } from "@/types/User";
 import { Role } from "@/types/Role";
 
 import useAuth from "@/hooks/useAuth";
@@ -61,6 +59,7 @@ const createUserSchema = z
       .regex(/\d/, "La contraseña debe tener al menos un número."),
     confirmPassword: z.string().min(1, "Confirmá la contraseña"),
     phone: z.string().optional(),
+    role: z.enum([Role.CUSTOMER, Role.AUDITOR, Role.USER, Role.ADMIN]),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Las contraseñas no coinciden",
@@ -69,7 +68,7 @@ const createUserSchema = z
 
 const editUserSchema = z.object({
   email: z.string().email("El email no es válido"),
-  role: z.nativeEnum(Role),
+  role: z.enum([Role.CUSTOMER, Role.AUDITOR, Role.USER, Role.ADMIN]),
 });
 
 export default function EditUserModal({
@@ -80,7 +79,6 @@ export default function EditUserModal({
 }: Props) {
   const { logout, getAccessToken } = useAuth();
   const isEdit = user !== null;
-
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [form, setForm] = useState<UserFormData>(initialFormState);
@@ -94,12 +92,15 @@ export default function EditUserModal({
   const toggleConfirmPasswordVisibility = () =>
     setShowConfirmPassword((prev) => !prev);
 
+  const userIdMemo = user?._id;
+
   useEffect(() => {
-    // avoid synchronous setState within effect; guard by `open`
     if (!open) return;
+    const userId = userIdMemo;
     const timeoutId = setTimeout(() => {
       if (isEdit && user) {
-        const nextForm = {
+        const nextForm: UserFormData = {
+          _id: userId,
           firstName: user.firstName || "",
           lastName: user.lastName || "",
           email: user.email || "",
@@ -108,6 +109,7 @@ export default function EditUserModal({
         };
         setForm((prev) => {
           const same =
+            prev._id === nextForm._id &&
             prev.firstName === nextForm.firstName &&
             prev.lastName === nextForm.lastName &&
             prev.email === nextForm.email &&
@@ -125,14 +127,13 @@ export default function EditUserModal({
             prev.phone === initialFormState.phone;
           return same ? prev : initialFormState;
         });
-        if (password) setPassword("");
-        if (confirmPassword) setConfirmPassword("");
+        setPassword("");
+        setConfirmPassword("");
       }
-      // Clear errors only if present, avoid redundant state updates
       setErrors((prev) => (Object.keys(prev).length ? {} : prev));
     }, 0);
     return () => clearTimeout(timeoutId);
-  }, [isEdit, user, open, password, confirmPassword]);
+  }, [isEdit, open, userIdMemo, user]);
 
   const handleSelectChange = useCallback(
     (field: keyof UserFormData, value: string | boolean) => {
@@ -156,7 +157,6 @@ export default function EditUserModal({
     }
     try {
       if (!isEdit) {
-        // create validation
         const parsed = createUserSchema.safeParse({
           firstName: form.firstName,
           lastName: form.lastName,
@@ -164,6 +164,7 @@ export default function EditUserModal({
           password,
           confirmPassword,
           phone: form.phone,
+          role: form.role ?? Role.USER,
         });
         if (!parsed.success) {
           const fieldErrors: Partial<Record<string, string>> = {};
@@ -176,17 +177,17 @@ export default function EditUserModal({
         }
 
         setLoading(true);
-        const userToCreate: User = {
-          _id: String(Date.now()),
+        const userToCreate: CreateUser = {
           firstName: parsed.data.firstName,
           lastName: parsed.data.lastName,
           email: parsed.data.email,
           password: parsed.data.password,
-          role: (form.role as Role) ?? Role.USER,
+          confirmPassword: parsed.data.confirmPassword,
+          role: parsed.data.role,
           phone: parsed.data.phone,
         };
 
-        const { success, message } = await createUser(userToCreate);
+        const { success, message } = await createUser(token, userToCreate);
         setLoading(false);
 
         if (!success) {
@@ -215,12 +216,17 @@ export default function EditUserModal({
       }
 
       setLoading(true);
-      const updatePayload: Partial<UserFormData> = {
+      const resolvedId = (user._id);
+      const updatePayload: UserFormData = {
+        _id: resolvedId,
         email: parsedEdit.data.email,
         role: parsedEdit.data.role,
+        phone: form.phone ?? undefined,
+        firstName: form.firstName,
+        lastName: form.lastName,
       };
 
-      const { success, user: updatedUser, message } = await updateUserByEmail(
+      const { success, user: updatedUser, message } = await updateUserById(
         token,
         updatePayload
       );
@@ -270,7 +276,6 @@ export default function EditUserModal({
                   required
                   id="name"
                   value={form.firstName}
-                  disabled={isEdit}
                   onChange={(e) =>
                     handleSelectChange("firstName", e.target.value)
                   }
@@ -289,7 +294,6 @@ export default function EditUserModal({
                   required
                   id="lastName"
                   value={form.lastName}
-                  disabled={isEdit}
                   onChange={(e) =>
                     handleSelectChange("lastName", e.target.value)
                   }
@@ -307,8 +311,6 @@ export default function EditUserModal({
                   required
                   id="email"
                   value={form.email}
-                  disabled={isEdit}
-                  readOnly={isEdit}
                   onChange={(e) => handleSelectChange("email", e.target.value)}
                   className="w-2/3"
                 />
@@ -409,9 +411,10 @@ export default function EditUserModal({
                     <SelectValue placeholder="Seleccionar rol" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ADMIN">Administrador</SelectItem>
-                    <SelectItem value="USER">Usuario</SelectItem>
-                    <SelectItem value="AUDITOR">Auditor</SelectItem>
+                    <SelectItem value="ADMIN">ADMIN</SelectItem>
+                    <SelectItem value="USER">USER</SelectItem>
+                    <SelectItem value="AUDITOR">AUDITOR</SelectItem>
+                    <SelectItem value="CUSTOMER">CUSTOMER</SelectItem>
                   </SelectContent>
                 </Select>
               {errors.role && (

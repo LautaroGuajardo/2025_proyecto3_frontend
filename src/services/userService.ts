@@ -1,8 +1,40 @@
 import { apiEndpoints } from "@/api/endpoints";
-import { type User, type UserFormData } from "@/types/User";
+import { type CreateUser, type User, type UserFormData } from "@/types/User";
 import type { IUserService } from "@/services/interfaces/IUserService";
 
 class UserServiceReal implements IUserService {
+  async createUser(
+    token: string,
+    user: CreateUser
+  ): Promise<{ success: boolean; message?: string; user?: UserFormData }> {
+    try {
+      const response = await fetch(apiEndpoints.users.CREATE, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(user),
+      });
+      if (!response.ok) {
+        throw new Error("Error al crear el usuario");
+      }
+      const newUser: User = await response.json();
+      return {
+        success: true,
+        user: newUser,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Error desconocido al crear el usuario",
+      };
+    }
+  }
+
   async getAllUsers(
     token: string
   ): Promise<{ success: boolean; message?: string; users?: UserFormData[] }> {
@@ -123,21 +155,21 @@ class UserServiceReal implements IUserService {
     }
   }
 
-  async updateUserByEmail(
+  async updateUserById(
     token: string,
-    user: Partial<UserFormData>
+    user: UserFormData
   ): Promise<{ success: boolean; message?: string; user?: UserFormData }> {
+    console.log("Updating user:", user);
     try {
-      const email = user.email;
-      if (!email) {
+      if (!user._id) {
         return {
           success: false,
-          message: "El email es requerido para actualizar el usuario",
+          message: "El id es requerido para actualizar el usuario",
         };
       }
 
       const response = await fetch(
-        apiEndpoints.users.UPDATE_USER_BY_EMAIL(email),
+        apiEndpoints.users.UPDATE_USER_BY_ID(user._id),
         {
           method: "PATCH",
           headers: {

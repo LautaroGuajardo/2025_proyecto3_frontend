@@ -122,9 +122,8 @@ export default function Users() {
   const handleSave = (user: UserFormData, isEdit: boolean) => {
     if (isEdit) {
       setUsers((prevUsers) =>
-        prevUsers.map((u) => (u.email === user.email ? user : u))
+        prevUsers.map((u) => (u._id === user._id ? user : u))
       );
-      toast.success("Usuario actualizado correctamente");
     } else {
       fetchUsers(); // Refrescar la lista de usuarios
     }
@@ -250,11 +249,7 @@ export default function Users() {
                   ) : (
                     paginatedUsers.map((user: UserFormData) => (
                       <TableRow
-                        key={
-                          user.email.length > 50
-                            ? user.email.slice(0, 50)
-                            : user.email
-                        }
+                        key={ user._id }
                       >
                         <TableCell>
                           {user.firstName.length > 50

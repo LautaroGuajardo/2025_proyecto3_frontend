@@ -9,10 +9,6 @@ export const API_ENDPOINTS = {
     VALIDATE_TOKEN: "/auth/validate-token",
   },
 
-  create_user: {
-    REGISTER: "/create-user/",
-  },
-
   projects: {
     GET_ALL: "/projects",
     CREATE_PROJECT: "/projects",
@@ -39,13 +35,14 @@ export const API_ENDPOINTS = {
   },
 
   users: {
+    CREATE: "/users",
     GET_ALL: "/users",
     GET_PROFILE: "/auth/me",
     GET_USER_BY_EMAIL: (email: string) =>
       `/users/${encodeURIComponent(email)}`,
     UPDATE_USER_PROFILE: `/users/profile`,
-    UPDATE_USER_BY_EMAIL: (email: string) =>
-      `/users/${encodeURIComponent(email)}`,
+    UPDATE_USER_BY_ID: (id: string) =>
+      `/users/${id}`,
     DELETE_USER_BY_EMAIL: (email: string) => `/users/${email}`,
     UPDATE_PROFILE: "/users/profile",
     CHANGE_PASSWORD: (email: string) => `/users/${email}/change-password`,
