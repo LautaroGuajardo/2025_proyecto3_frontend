@@ -194,18 +194,32 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
   const handleFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const list = e.target.files;
     if (!list) return;
-    const arr = Array.from(list);
-    setFiles((prev) => [...prev, ...arr]);
-    arr.forEach((file) => {
-      if (file.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          setPreviews((p) => [...p, { url: String(reader.result), name: file.name, type: file.type }]);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        setPreviews((p) => [...p, { url: undefined, name: file.name, type: file.type }]);
+    const incoming = Array.from(list);
+
+    const allowed = new Set(["image/png", "image/jpeg", "image/jpg", "application/pdf"]);
+    const filtered = incoming.filter((f) => allowed.has(f.type));
+    if (filtered.length < incoming.length) {
+      toast.warn("Algunos archivos fueron descartados por tipo no permitido.");
+    }
+
+    setFiles((prev) => {
+      const slots = Math.max(0, 2 - prev.length);
+      const toAdd = filtered.slice(0, slots);
+      if (filtered.length > slots) {
+        toast.warn("Máximo 2 archivos por reclamo. Se añadieron los primeros 2.");
       }
+      toAdd.forEach((file) => {
+        if (file.type.startsWith("image/")) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            setPreviews((p) => [...p, { url: String(reader.result), name: file.name, type: file.type }]);
+          };
+          reader.readAsDataURL(file);
+        } else {
+          setPreviews((p) => [...p, { url: undefined, name: file.name, type: file.type }]);
+        }
+      });
+      return [...prev, ...toAdd];
     });
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -362,13 +376,12 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
         criticality: criticalityId,
         priority: priorityId,
         project: project,
-        subarea: selectedSubareaId ? { _id: selectedSubareaId } : undefined,
-        attachments: files.length ? files : undefined,
       };
 
       const { success } = await claimService.createClaim(
         token,
-        toSave
+        toSave,
+        files
       );
 
       if (!success) {
@@ -480,35 +493,57 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
                     Adjuntos
                   </Label>
                   <div className="w-3/5">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*,application/pdf"
-                      multiple
-                      onChange={handleFilesChange}
-                      disabled={isEdit || esResuelto}
-                      className="hidden"
-                    />
-                    <div
-                      className="border-dashed border-2 border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center gap-3 cursor-pointer"
-                      onClick={() => { if (!isEdit && !esResuelto) fileInputRef.current?.click(); }}
-                    >
-                      <div className="text-sm text-muted-foreground">Sube imágenes (jpg/png) o PDF(s). Opcional.</div>
-                      <div className="text-xs text-muted-foreground">Puedes subir varios archivos</div>
-                    </div>
+                    {!isEdit && (
+                      <>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*,application/pdf"
+                          multiple
+                          onChange={handleFilesChange}
+                          disabled={esResuelto}
+                          className="hidden"
+                        />
+                        <div
+                          className="border-dashed border-2 border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center gap-3 cursor-pointer"
+                          onClick={() => { if (!esResuelto) fileInputRef.current?.click(); }}
+                        >
+                          <div className="text-sm text-muted-foreground">Sube imágenes (jpg/png) o PDF. Opcional.</div>
+                          <div className="text-xs text-muted-foreground">Máximo 2 archivos permitidos</div>
+                        </div>
 
-                    {previews.length > 0 && (
-                      <div className="mt-2 grid grid-cols-3 gap-2">
-                        {previews.map((p, i) => (
-                          <div key={i} className="border rounded p-2 text-center">
-                            {p.url ? (
-                              <img src={p.url} alt={p.name} className="h-20 w-full object-cover" />
-                            ) : (
-                              <div className="text-sm truncate">{p.name}</div>
-                            )}
-                            <button type="button" className="text-xs text-rose-600 mt-1" onClick={() => removeFileAt(i)} disabled={isEdit || esResuelto}>Eliminar</button>
+                        {previews.length > 0 && (
+                          <div className="mt-2 grid grid-cols-3 gap-2">
+                            {previews.map((p, i) => (
+                              <div key={i} className="border rounded p-2 text-center">
+                                {p.url ? (
+                                  <img src={p.url} alt={p.name} className="h-20 w-full object-cover" />
+                                ) : (
+                                  <div className="text-sm truncate">{p.name}</div>
+                                )}
+                                <button type="button" className="text-xs text-rose-600 mt-1" onClick={() => removeFileAt(i)} disabled={esResuelto}>Eliminar</button>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
+                      </>
+                    )}
+
+                    {isEdit && Array.isArray((claim as unknown as { files?: Array<{ _id: string; name: string; url: string; fileType?: string }> })?.files) && (claim as unknown as { files?: Array<{ _id: string; name: string; url: string; fileType?: string }> }).files!.length > 0 && (
+                      <div className="mt-2 grid grid-cols-3 gap-2">
+                        {((claim as unknown as { files?: Array<{ _id: string; name: string; url: string; fileType?: string }> }).files as Array<{ _id: string; name: string; url: string; fileType?: string }>).map((f, i) => {
+                          const isPdf = String(f.fileType).toUpperCase() === 'PDF' || f.url?.toLowerCase()?.endsWith('.pdf');
+                          const isImage = String(f.fileType).toUpperCase() === 'IMAGE' || (!isPdf);
+                          return (
+                            <div key={f._id ?? i} className="border rounded p-2 text-center">
+                              {isImage && !isPdf ? (
+                                <img src={f.url} alt={f.name} className="h-20 w-full object-cover" />
+                              ) : (
+                                <a href={f.url} target="_blank" rel="noreferrer" className="text-sm text-blue-600 underline truncate inline-block max-w-full">{f.name}</a>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>

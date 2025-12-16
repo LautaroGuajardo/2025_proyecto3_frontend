@@ -6,7 +6,8 @@ export interface IClaimService {
   ): Promise<{ success: boolean; message?: string; claims?: Claim[] }>;
   createClaim(
     token: string,
-    claim: CreateClaim
+    claim: CreateClaim,
+    files?: File[]
   ): Promise<{ success: boolean; message?: string; claim?: Claim }>;
   updateClaimById(
     token: string,

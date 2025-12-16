@@ -34,16 +34,28 @@ class ClaimServiceReal implements IClaimService {
 
   async createClaim(
     token: string,
-    claim: CreateClaim
+    claim: CreateClaim,
+    files?: File[]
   ): Promise<{ success: boolean; message?: string; claim?: Claim }> {
     try {
+      const form = new FormData();
+      form.append("description", String(claim.description ?? ""));
+      form.append("project", String(claim.project));
+      form.append("priority", String(claim.priority));
+      form.append("criticality", String(claim.criticality));
+      form.append("claimType", String(claim.claimType));
+
+      (files ?? [])
+        .slice(0, 2)
+        .forEach((f) => form.append("files", f));
+
       const response = await fetch(apiEndpoints.claims.CREATE_CLAIM, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          // No seteamos Content-Type manualmente para permitir boundary correcto
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(claim),
+        body: form,
       });
       if (!response.ok) {
         throw new Error("Error al crear el reclamo");
