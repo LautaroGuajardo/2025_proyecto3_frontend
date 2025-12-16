@@ -151,6 +151,11 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
     setClaimId(claim._id);
     setStatusId(String(claim.claimStatus ?? ""));
 
+    // si las areas no se han cargado, espera — el useEffecto que se ejecutará cuando las `areas` cambien.
+    if (isEditing && areas.length === 0) {
+      return;
+    }
+
     const areaName = claim.subarea?.area?.name;
     const subareaName = claim.subarea?.name;
 
@@ -176,7 +181,6 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
     const foundSubarea = foundArea.subareas?.find(
       (s: Subarea) => s.name === subareaName
     );
-    
     if (foundSubarea) {
       setSelectedSubareaId(foundSubarea._id);
       setSubareaName(foundSubarea.name);
@@ -239,6 +243,24 @@ export default function EditClaimModal({ open, onOpenChange, claim, onSaved }: P
   const filteredSubareas = selectedAreaId
     ? areas.find(a => a._id === selectedAreaId)?.subareas || []
     : [];
+
+  // Aseguramos que se establezca la subárea seleccionada después de que el área seleccionada y las áreas estén listas.
+  // Solo se ejecuta al editar un reclamo existente y hay un claim.subarea.
+  useEffect(() => {
+    if (!claim || !claim._id) return;
+    const claimSubId = claim.subarea?._id;
+    if (!claimSubId) return;
+    if (!selectedAreaId) return;
+    const area = areas.find(a => String(a._id) === String(selectedAreaId));
+    const sub = area?.subareas?.find((s: Subarea) => String(s._id) === String(claimSubId));
+    if (!sub) return;
+    if (String(selectedSubareaId) === String(sub._id)) return;
+    const t = setTimeout(() => {
+      setSelectedSubareaId(sub._id);
+      setSubareaName(sub.name);
+    }, 0);
+    return () => clearTimeout(t);
+  }, [selectedAreaId, areas, claim, selectedSubareaId]);
 
   const estadoActual = claim?.claimStatus;
   const allowedStatuses = React.useMemo(() => {

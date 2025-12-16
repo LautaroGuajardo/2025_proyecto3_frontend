@@ -75,7 +75,14 @@ export default function Claims() {
       return;
     }
 
-    setClaims([...claims]);
+    // Ordenar por updatedAt descendente (los más recientes primero)
+    setClaims([
+      ...claims
+    ].sort((a, b) => {
+      const ta = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+      const tb = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+      return tb - ta;
+    }));
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

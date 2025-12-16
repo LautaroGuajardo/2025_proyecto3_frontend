@@ -23,6 +23,7 @@ export interface Claim {
   project?: Partial<Project>;
   subarea?: Partial<Subarea>;
   actions?: string;
+  updatedAt?: Date;
   attachments?: Attachment[];
 }
 
