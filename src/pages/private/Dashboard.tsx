@@ -5,14 +5,13 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import useAuth from "@/hooks/useAuth";
-import { claimService } from "@/services/factories/claimServiceFactory";
 import { projectService } from "@/services/factories/projectServiceFactory";
 import { userService } from "@/services/factories/userServiceFactory";
-import { claimHistoryService } from "@/services/factories/claimHistoryServiceFactory";
-import type { Claim } from "@/types/Claim";
+import { areaService } from "@/services/factories/areaServiceFactory";
+import { getDashboardReports, type DashboardResponse } from "@/services/dashboardService";
 import type { Project } from "@/types/Project";
 import type { UserFormData } from "@/types/User";
-import type { ClaimHistory } from "@/types/ClaimHistory";
+import type { Area } from "@/types/Area";
 import { ClaimStatus } from "@/types/ClaimStatus";
 import { Role } from "@/types/Role";
 import DashboardCharts from "./components/DashboardCharts";
@@ -24,22 +23,46 @@ export default function Dashboard() {
   const { getAccessToken, logout, role } = useAuth();
   const token = getAccessToken();
 
-  const [claims, setClaims] = useState<Claim[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [users, setUsers] = useState<UserFormData[]>([]);
-  const [histories, setHistories] = useState<ClaimHistory[]>([]);
+  const [claimsByMonth, setClaimsByMonth] = useState<{ month: string; count: number }[]>([]);
+  const [statusCountsData, setStatusCountsData] = useState<{ name: string; value: number }[]>([]);
+  const [avgResolutionByTypeData, setAvgResolutionByTypeData] = useState<{ name: string; value: number }[]>([]);
+  const [workloadByAreaData, setWorkloadByAreaData] = useState<{ name: string; value: number }[]>([]);
+  const [areasFromApi, setAreasFromApi] = useState<{ id: string; name: string }[]>([]);
+  const [areas, setAreas] = useState<Area[]>([]);
+  const [commonTypesData, setCommonTypesData] = useState<{ name: string; value: number }[]>([]);
 
   // Filtros
-  const [filterClientId, setFilterClientId] = useState<string>("ALL");
   const [filterProjectType, setFilterProjectType] = useState<string>("ALL");
-  const [filterArea, setFilterArea] = useState<string>("ALL");
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
 
-  const isCustomer = role === Role.CUSTOMER;
+  // Eliminado: búsqueda libre en front (no se usa)
+  const [projectId, setProjectId] = useState<string>("ALL");
+  const [areaId, setAreaId] = useState<string>("ALL");
+  const [subareaId, setSubareaId] = useState<string>("ALL");
+  const [customerId, setCustomerId] = useState<string>("ALL");
+  const [responsibleUserId, setResponsibleUserId] = useState<string>("ALL");
+
+  const esCustomer = role === Role.CUSTOMER;
+  const esAuditor = role === Role.ADMIN || role === Role.AUDITOR;
+  const avgUnit: 'hours' | 'days' = esAuditor ? 'days' : 'hours';
 
   useEffect(() => {
+    const mapApiToCharts = (data: DashboardResponse) => {
+      setClaimsByMonth(data.claimsPerMonth ?? []);
+      const sc = data.statusCounts ?? { pending: 0, inProgress: 0, resolved: 0 };
+      setStatusCountsData([
+        { name: "PENDING", value: sc.pending || 0 },
+        { name: "IN_PROGRESS", value: sc.inProgress || 0 },
+        { name: "RESOLVED", value: sc.resolved || 0 },
+      ]);
+      setAvgResolutionByTypeData((data.avgResolutionByType ?? []).map(d => ({ name: d.claimType, value: avgUnit === 'hours' ? (d.avgDays ?? 0) * 24 : d.avgDays })));
+      setWorkloadByAreaData((data.workloadByArea ?? []).map(d => ({ name: d.areaName, value: d.count })));
+      setCommonTypesData((data.commonClaimTypes ?? []).map(d => ({ name: d.claimType, value: d.count })));
+    };
     const load = async () => {
       if (!token) {
         toast.error("Por favor inicia sesión para ver el dashboard");
@@ -47,172 +70,114 @@ export default function Dashboard() {
         return;
       }
       try {
-        const [claimsRes, projectsRes, usersRes] = await Promise.all([
-          claimService.getAllClaims(token),
+        const [projectsRes, usersRes, areasRes] = await Promise.all([
           projectService.getAllProjects(token),
           userService.getAllUsers(token),
+          areaService.getAllAreas(token),
         ]);
-
-        if (claimsRes.success && claimsRes.claims) {
-          const normalized = claimsRes.claims.map((c: Claim) => ({ ...c, id: String(c._id) }));
-          setClaims(normalized);
-
-          const allHistories: ClaimHistory[] = [];
-          for (const claim of normalized) {
-            const h = await claimHistoryService.getClaimHistoryById(token, claim.id);
-            if (h.success && h.claimHistory) allHistories.push(...h.claimHistory);
-          }
-          setHistories(allHistories);
-        }
 
         if (projectsRes.success && projectsRes.projects)
           setProjects(projectsRes.projects.map((p: Project) => ({ ...p, id: String(p._id) })));
 
         if (usersRes.success && usersRes.users) setUsers(usersRes.users);
+
+        if (areasRes.success && areasRes.areas) {
+          setAreas(areasRes.areas);
+          setAreasFromApi(
+            areasRes.areas
+              .filter(a => a && a._id && a.name)
+              .map(a => ({ id: String(a._id), name: a.name }))
+          );
+        }
+
+        // Dashboard inicial sin filttros
+        const { success, data } = await getDashboardReports(token, {});
+        if (success && data) mapApiToCharts(data);
       } catch (error) {
         void error;
         toast.error("Error al cargar datos del dashboard. Intenta nuevamente.");
       }
     };
     void load();
-  }, [token, logout]);
+  }, [token, logout, avgUnit]);
 
-  // Helpers de filtros
-  const projectById = useMemo(() => {
-    const map = new Map<string, Project>();
-    projects.forEach((p) => map.set(p._id, p));
-    return map;
-  }, [projects]);
+  // Refetch cuando los filtros cambian
+  useEffect(() => {
+    const refetch = async () => {
+      if (!token) return;
+      const filters: Record<string, string> = {};
+      if (dateFrom) filters.fromDate = new Date(dateFrom).toISOString();
+      if (dateTo) filters.toDate = new Date(dateTo).toISOString();
+      if (filterProjectType !== "ALL") filters.projectType = filterProjectType;
+      if (filterStatus !== "ALL") filters.status = filterStatus;
+      // Sin filtro de búsqueda en el front
+      if (projectId !== "ALL") filters.projectId = projectId;
+      if (areaId !== "ALL") filters.areaId = areaId;
+      if (subareaId !== "ALL") filters.subareaId = subareaId;
+      if (esAuditor && customerId !== "ALL") filters.customerId = customerId;
+      if (esAuditor && responsibleUserId !== "ALL") filters.responsibleUserId = responsibleUserId;
+      const { success, data } = await getDashboardReports(token, filters);
+      if (success && data) {
+        setClaimsByMonth([]); // prevenir parpadeo con datos obsoletos
+        setStatusCountsData([]);
+        setAvgResolutionByTypeData([]);
+        setWorkloadByAreaData([]);
+        
+        setCommonTypesData([]);
+        const mapApiToCharts = (d: DashboardResponse) => {
+          setClaimsByMonth(d.claimsPerMonth ?? []);
+          const sc = d.statusCounts ?? { pending: 0, inProgress: 0, resolved: 0 };
+          setStatusCountsData([
+            { name: "PENDING", value: sc.pending || 0 },
+            { name: "IN_PROGRESS", value: sc.inProgress || 0 },
+            { name: "RESOLVED", value: sc.resolved || 0 },
+          ]);
+          setAvgResolutionByTypeData((d.avgResolutionByType ?? []).map(x => ({ name: x.claimType, value: avgUnit === 'hours' ? (x.avgDays ?? 0) * 24 : x.avgDays })));
+          setWorkloadByAreaData((d.workloadByArea ?? []).map(x => ({ name: x.areaName, value: x.count })));
+          
+          setCommonTypesData((d.commonClaimTypes ?? []).map(x => ({ name: x.claimType, value: x.count })));
+        };
+        mapApiToCharts(data);
+      }
+    };
+    void refetch();
+  }, [token, dateFrom, dateTo, filterProjectType, filterStatus, projectId, areaId, subareaId, customerId, responsibleUserId, esAuditor, avgUnit]);
 
-  const filterClaim = (c: Claim): boolean => {
-    if (filterStatus !== "ALL" && String(c.claimStatus) !== filterStatus) return false;
-    if (filterArea !== "ALL" && String(c.subarea?.area?.name ?? "") !== filterArea) return false;
-    if (filterClientId !== "ALL" || filterProjectType !== "ALL") {
-      const pid = c.project?._id ?? "";
-      const p = pid ? projectById.get(pid) : undefined;
-      if (filterClientId !== "ALL" && (!p || p.user?._id !== filterClientId)) return false;
-      if (filterProjectType !== "ALL" && (!p || p.projectType !== filterProjectType)) return false;
-    }
-    return true;
-  };
 
-  const filterHistory = (h: ClaimHistory): boolean => {
-    // Fecha
-    if (dateFrom) {
-      const fromMs = new Date(dateFrom).getTime();
-      const hMs = new Date(h.startDate).getTime();
-      if (hMs < fromMs) return false;
-    }
-    if (dateTo) {
-      const toMs = new Date(dateTo).getTime();
-      const hMs = new Date(h.startDate).getTime();
-      if (hMs > toMs) return false;
-    }
-    // Área
-    if (filterArea !== "ALL" && String(h.subarea?.area.name ?? "") !== filterArea) return false;
-    // Cliente y tipo proyecto por claim -> project
-    if (filterClientId !== "ALL" || filterProjectType !== "ALL") {
-      const claim = claims.find(c => c._id === h.claim);
-      const pid = claim?.project?._id ?? "";
-      const p = pid ? projectById.get(pid) : undefined;
-      if (filterClientId !== "ALL" && (!p || p.user?._id !== filterClientId)) return false;
-      if (filterProjectType !== "ALL" && (!p || p.projectType !== filterProjectType)) return false;
-    }
-    // Estado
-    if (filterStatus !== "ALL") {
-      const claim = claims.find(c => c._id === h.claim);
-      if (claim && String(claim.claimStatus) !== filterStatus) return false;
-    }
-    return true;
-  };
-
-  const filteredClaims = useMemo(() => claims.filter(filterClaim), [claims, filterStatus, filterArea, filterClientId, filterProjectType, projectById]);
-  const filteredHistories = useMemo(() => histories.filter(filterHistory), [histories, dateFrom, dateTo, filterArea, filterClientId, filterProjectType, filterStatus, claims, projectById]);
 
   const claimCounts = useMemo(() => {
-    const total = filteredClaims.length;
-    const pending = filteredClaims.filter((c) => c.claimStatus === ClaimStatus.PENDING).length;
-    const inProgress = filteredClaims.filter((c) => c.claimStatus === ClaimStatus.IN_PROGRESS).length;
-    const resolved = filteredClaims.filter((c) => c.claimStatus === ClaimStatus.RESOLVED).length;
+    const pending = statusCountsData.find(s => s.name === "PENDING")?.value ?? 0;
+    const inProgress = statusCountsData.find(s => s.name === "IN_PROGRESS")?.value ?? 0;
+    const resolved = statusCountsData.find(s => s.name === "RESOLVED")?.value ?? 0;
+    const total = pending + inProgress + resolved;
     return { total, pending, inProgress, resolved };
-  }, [filteredClaims]);
-
-  const monthlyClaims = useMemo(() => {
-    const counts: Record<string, number> = {};
-    filteredHistories.forEach((h) => {
-      const date = new Date(h.startDate);
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      counts[key] = (counts[key] || 0) + 1;
-    });
-    return Object.entries(counts)
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([month, count]) => ({ month, count }));
-  }, [filteredHistories]);
-
-  const avgResolutionByType = useMemo(() => {
-    const aggregates: Record<string, { totalMs: number; count: number }> = {};
-
-    filteredHistories.forEach((h) => {
-      if (!h.endDate || !h.startDate) return;
-      const start = new Date(h.startDate).getTime();
-      const end = new Date(h.endDate).getTime();
-      if (isNaN(start) || isNaN(end) || end < start) return;
-      const diffMs = end - start;
-      const key = String(h.claimType ?? "Desconocido");
-      if (!aggregates[key]) aggregates[key] = { totalMs: 0, count: 0 };
-      aggregates[key].totalMs += diffMs;
-      aggregates[key].count += 1;
-    });
-
-    return Object.entries(aggregates)
-      .map(([name, { totalMs, count }]) => ({ name, value: totalMs / count / (1000 * 60 * 60 * 24) })) // days
-      .sort((a, b) => b.value - a.value);
-  }, [filteredHistories]);
-
-  const workloadByArea = useMemo(() => {
-    const load: Record<string, number> = {};
-    filteredHistories.forEach((h) => {
-      const area = h.subarea?.area.name || "Sin área";
-      load[area] = (load[area] || 0) + 1;
-    });
-    return Object.entries(load).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [filteredHistories]);
-
-  const commonTypes = useMemo(() => {
-    const map = new Map<string, number>();
-    filteredClaims.forEach((c) => {
-      const key = String(c.claimType ?? "Desconocido");
-      map.set(key, (map.get(key) || 0) + 1);
-    });
-    return Array.from(map.entries()).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [filteredClaims]);
+  }, [statusCountsData]);
 
   // Opciones de filtros
-  const clientsOptions = useMemo(() => {
-    const opts: { id: string; name: string }[] = [];
-    projects.forEach(p => {
-      if (p.user?._id) {
-        const name = `${p.user.firstName ?? ''} ${p.user.lastName ?? ''}`.trim() || p.user.email;
-        if (!opts.find(o => o.id === p.user?._id)) opts.push({ id: p.user._id, name });
-      }
-    });
-    return opts.sort((a, b) => a.name.localeCompare(b.name));
-  }, [projects]);
 
   const projectTypeOptions = useMemo(() => Object.values(ProjectType), []);
   const areaOptions = useMemo(() => {
-    const set = new Set<string>();
-    histories.forEach(h => { const n = h.subarea?.area.name; if (n) set.add(n); });
-    return Array.from(set.values()).sort();
-  }, [histories]);
+    return [...(areasFromApi.length ? areasFromApi : (areas || []).map(a => ({ id: String(a._id), name: a.name })))].sort((a, b) => a.name.localeCompare(b.name));
+  }, [areasFromApi, areas]);
 
-  const statusCounts = useMemo(() => {
-    return [
-      { name: "PENDING", value: filteredClaims.filter((c) => c.claimStatus === ClaimStatus.PENDING).length },
-      { name: "IN_PROGRESS", value: filteredClaims.filter((c) => c.claimStatus === ClaimStatus.IN_PROGRESS).length },
-      { name: "RESOLVED", value: filteredClaims.filter((c) => c.claimStatus === ClaimStatus.RESOLVED).length },
-    ];
-  }, [filteredClaims]);
+  const subareaOptions = useMemo(() => {
+    if (areaId === "ALL") return [];
+    const area = (areas || []).find(a => String(a._id) === String(areaId));
+    const subs = area?.subareas ?? [];
+    return subs.map(s => ({ id: String(s._id), name: s.name }));
+  }, [areas, areaId]);
+
+  useEffect(() => {
+    // Reset subarea al cambiar de área o si no hay subareas
+    // Solo actualizar si el valor actual es distinto para evitar renders en cascada
+    if ((areaId === "ALL" || subareaOptions.length === 0) && subareaId !== "ALL") {
+      // Ejecutar la actualización de estado de forma asíncrona para evitar setState síncrono dentro del effect
+      const t = setTimeout(() => {
+        setSubareaId("ALL");
+      }, 0);
+      return () => clearTimeout(t);
+    }
+  }, [areaId, subareaOptions.length, subareaId]);
 
   return (
     <div className="p-6 space-y-6">
@@ -221,70 +186,172 @@ export default function Dashboard() {
 
       {/* Filtros */}
       <Card>
-        <CardContent className="p-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">Cliente</div>
-            <Select value={filterClientId} onValueChange={setFilterClientId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Todos</SelectItem>
-                {clientsOptions.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <CardContent className="p-4 flex flex-col gap-4">
+          {/* Fila 1 */}
+          <div className="flex flex-wrap gap-3">
+            {!esCustomer && (
+              <div className="min-w-[180px] flex items-center gap-2">
+                <div className="text-xs text-black">Cliente:</div>
+                <div className="flex-1">
+                  <Select value={customerId} onValueChange={setCustomerId}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Todos</SelectItem>
+                      {users
+                        .filter(u => u.role === Role.CUSTOMER)
+                        .map(u => (
+                          <SelectItem key={String(u._id)} value={String(u._id)}>
+                            {`${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            <div className="min-w-[180px] flex items-center gap-2">
+              <div className="text-xs text-black">Tipo de proyecto:</div>
+              <div className="flex-1">
+                <Select value={filterProjectType} onValueChange={setFilterProjectType}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Todos</SelectItem>
+                    {projectTypeOptions.map(t => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+                
+            <div className="min-w-[180px] flex items-center gap-2">
+              <div className="text-xs text-black">Proyecto:</div>
+              <div className="flex-1">
+                <Select value={projectId} onValueChange={setProjectId}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Todos</SelectItem>
+                    {projects.map(p => (
+                      <SelectItem key={String(p._id)} value={String(p._id)}>
+                        {p.title || `#${p._id}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+                
+            <div className="min-w-40 flex items-center gap-2">
+              <div className="text-xs text-black">Área:</div>
+              <div className="flex-1">
+                <Select value={areaId} onValueChange={setAreaId}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Todas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Todas</SelectItem>
+                    {areaOptions.map(a => (
+                      <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+                
+            <div className="min-w-40 flex items-center gap-2">
+              <div className="text-xs text-black">Subárea:</div>
+              <div className="flex-1">
+                <Select value={subareaId} onValueChange={setSubareaId} disabled={areaId === "ALL" || subareaOptions.length === 0}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={areaId === "ALL" ? "Selecciona un área" : (subareaOptions.length ? "Todas" : "Sin subáreas")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subareaOptions.length ? (
+                      <>
+                        <SelectItem value="ALL">Todas</SelectItem>
+                        {subareaOptions.map(sa => (
+                          <SelectItem key={sa.id} value={sa.id}>{sa.name}</SelectItem>
+                        ))}
+                      </>
+                    ) : (
+                      <div className="px-2 py-1 text-xs text-muted-foreground">{areaId === "ALL" ? "Selecciona un área" : "No hay subáreas disponibles"}</div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+                
+            <div className="min-w-40 flex items-center gap-2">
+              <div className="text-xs text-black">Estado:</div>
+              <div className="flex-1">
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Todos</SelectItem>
+                    {Object.values(ClaimStatus).map(s => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+                
+            {esAuditor && (
+              <div className="min-w-[180px] flex items-center gap-2">
+                <div className="text-xs text-black">Responsable:</div>
+                <div className="flex-1">
+                  <Select value={responsibleUserId} onValueChange={setResponsibleUserId}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Todos</SelectItem>
+                      {users
+                        .filter(u => u.role === Role.USER)
+                        .map(u => (
+                          <SelectItem key={String(u._id)} value={String(u._id)}>
+                            {`${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
           </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">Tipo de proyecto</div>
-            <Select value={filterProjectType} onValueChange={setFilterProjectType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Todos</SelectItem>
-                {projectTypeOptions.map(t => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">Área</div>
-            <Select value={filterArea} onValueChange={setFilterArea}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Todas</SelectItem>
-                {areaOptions.map(a => (
-                  <SelectItem key={a} value={a}>{a}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">Estado</div>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Todos</SelectItem>
-                {Object.values(ClaimStatus).map(s => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">Desde</div>
-            <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">Hasta</div>
-            <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+          
+          {/* Fila 2 (solo fechas) */}
+          <div className="flex gap-3">
+            <div className="min-w-40 flex items-center gap-2">
+              <div className="text-xs text-black">Desde:</div>
+              <div className="flex-1">
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={e => setDateFrom(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="min-w-40 flex items-center gap-2">
+              <div className="text-xs text-black">Hasta:</div>
+              <div className="flex-1">
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={e => setDateTo(e.target.value)}
+                />
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -308,7 +375,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {!isCustomer && <Card className="flex-1 min-w-[220px]">
+        {!esCustomer && <Card className="flex-1 min-w-[220px]">
           <CardContent>
             <div className="text-sm text-muted-foreground">Usuarios</div>
             <div className="text-2xl font-semibold mt-2">{users.length}</div>
@@ -318,11 +385,12 @@ export default function Dashboard() {
       </div>
 
       <DashboardCharts
-        claimsByMonth={monthlyClaims}
-        statusCounts={statusCounts}
-        avgResolutionByType={avgResolutionByType}
-        workloadByArea={workloadByArea}
-        commonTypes={commonTypes}
+        claimsByMonth={claimsByMonth}
+        statusCounts={statusCountsData}
+        avgResolutionByType={avgResolutionByTypeData}
+        workloadByArea={workloadByAreaData}
+        commonTypes={commonTypesData}
+        avgUnit={avgUnit}
       />
     </div>
   );
