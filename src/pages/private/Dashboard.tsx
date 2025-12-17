@@ -60,7 +60,14 @@ export default function Dashboard() {
         { name: "RESOLVED", value: sc.resolved || 0 },
       ]);
       setAvgResolutionByTypeData((data.avgResolutionByType ?? []).map(d => ({ name: d.claimType, value: avgUnit === 'hours' ? (d.avgDays ?? 0) * 24 : d.avgDays })));
-      setWorkloadByAreaData((data.workloadByArea ?? []).map(d => ({ name: d.areaName, value: d.count })));
+      // Consolidar por área (por seguridad, en caso de que backend envíe subáreas separadas)
+      const byArea: Record<string, { name: string; value: number }> = {};
+      for (const w of data.workloadByArea ?? []) {
+        const key = String((w as any).areaId ?? w.areaName);
+        if (!byArea[key]) byArea[key] = { name: w.areaName, value: 0 };
+        byArea[key].value += w.count;
+      }
+      setWorkloadByAreaData(Object.values(byArea));
       setCommonTypesData((data.commonClaimTypes ?? []).map(d => ({ name: d.claimType, value: d.count })));
     };
     const load = async () => {
@@ -133,7 +140,13 @@ export default function Dashboard() {
             { name: "RESOLVED", value: sc.resolved || 0 },
           ]);
           setAvgResolutionByTypeData((d.avgResolutionByType ?? []).map(x => ({ name: x.claimType, value: avgUnit === 'hours' ? (x.avgDays ?? 0) * 24 : x.avgDays })));
-          setWorkloadByAreaData((d.workloadByArea ?? []).map(x => ({ name: x.areaName, value: x.count })));
+          const byArea2: Record<string, { name: string; value: number }> = {};
+          for (const w of d.workloadByArea ?? []) {
+            const key = String((w as any).areaId ?? w.areaName);
+            if (!byArea2[key]) byArea2[key] = { name: w.areaName, value: 0 };
+            byArea2[key].value += w.count;
+          }
+          setWorkloadByAreaData(Object.values(byArea2));
           
           setCommonTypesData((d.commonClaimTypes ?? []).map(x => ({ name: x.claimType, value: x.count })));
         };
@@ -260,29 +273,6 @@ export default function Dashboard() {
                     {areaOptions.map(a => (
                       <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-                
-            <div className="min-w-40 flex items-center gap-2">
-              <div className="text-xs text-black">Subárea:</div>
-              <div className="flex-1">
-                <Select value={subareaId} onValueChange={setSubareaId} disabled={areaId === "ALL" || subareaOptions.length === 0}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={areaId === "ALL" ? "Selecciona un área" : (subareaOptions.length ? "Todas" : "Sin subáreas")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {subareaOptions.length ? (
-                      <>
-                        <SelectItem value="ALL">Todas</SelectItem>
-                        {subareaOptions.map(sa => (
-                          <SelectItem key={sa.id} value={sa.id}>{sa.name}</SelectItem>
-                        ))}
-                      </>
-                    ) : (
-                      <div className="px-2 py-1 text-xs text-muted-foreground">{areaId === "ALL" ? "Selecciona un área" : "No hay subáreas disponibles"}</div>
-                    )}
                   </SelectContent>
                 </Select>
               </div>
