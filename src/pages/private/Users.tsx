@@ -24,7 +24,6 @@ import {
 import FetchingSpinner from "@/components/common/FetchingSpinner";
 import EditButton from "@/components/common/EditButton";
 import DeleteButton from "@/components/common/DeleteButton";
-import MoreDetailsButton from "@/components/common/MoreDetailsButton";
 import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
 
 import EditUserModal from "./components/EditUserModal";
@@ -102,7 +101,13 @@ export default function Users() {
 
   
   const sortedUsers = [...filteredUsers].sort((a, b) => {
+    const ts = (v: unknown) => {
+      const t = v ? new Date(v as unknown as string).getTime() : 0;
+      return Number.isFinite(t) ? t : 0;
+    };
     switch (orderBy) {
+      case "latest":
+        return ts(b.updatedAt) - ts(a.updatedAt);
       case "name":
         return (a.firstName || "").localeCompare(b.firstName || "");
       case "lastName":
@@ -113,7 +118,6 @@ export default function Users() {
         return ((a as unknown as { phone?: string }).phone || "").localeCompare(
           (b as unknown as { phone?: string }).phone || ""
         );
-      case "latest":
       default:
         return 0;
     }
@@ -200,7 +204,7 @@ export default function Users() {
                 <SelectContent>
                   <SelectItem value="latest">Más reciente</SelectItem>
                   <SelectItem value="name">Nombre</SelectItem>
-                  <SelectItem value="lastname">Apellido</SelectItem>
+                  <SelectItem value="lastName">Apellido</SelectItem>
                   <SelectItem value="email">Correo</SelectItem>
                   <SelectItem value="phone">Teléfono</SelectItem>
                 </SelectContent>
@@ -271,12 +275,6 @@ export default function Users() {
                         </TableCell>
                         <TableCell>{user.phone ?? "---"}</TableCell>
                         <TableCell className="text-center space-x-2">
-                          <MoreDetailsButton
-                            handleViewDetails={() => {
-                              setSelectedUser(user);
-                              setModalOpen(true);
-                            }}
-                          />
                           <EditButton
                             handleEdit={() => {
                               setSelectedUser(user);

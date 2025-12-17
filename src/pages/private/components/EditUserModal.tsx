@@ -58,7 +58,16 @@ const createUserSchema = z
       .regex(/[a-z]/, "La contraseña debe tener al menos una letra minúscula.")
       .regex(/\d/, "La contraseña debe tener al menos un número."),
     confirmPassword: z.string().min(1, "Confirmá la contraseña"),
-    phone: z.string().optional(),
+    phone: z.preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+      z
+        .string()
+        .regex(
+          /^\+54 9 \d{2} \d{8}$/,
+          "El teléfono debe tener el formato +54 9 12 34567890"
+        )
+        .optional()
+    ),
     role: z.enum([Role.CUSTOMER, Role.AUDITOR, Role.USER, Role.ADMIN]),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -69,6 +78,16 @@ const createUserSchema = z
 const editUserSchema = z.object({
   email: z.string().email("El email no es válido"),
   role: z.enum([Role.CUSTOMER, Role.AUDITOR, Role.USER, Role.ADMIN]),
+  phone: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z
+      .string()
+      .regex(
+        /^\+54 9 \d{2} \d{8}$/,
+        "El teléfono debe tener el formato +54 9 12 34567890"
+      )
+      .optional()
+  ),
 });
 
 export default function EditUserModal({
@@ -204,6 +223,7 @@ export default function EditUserModal({
       const parsedEdit = editUserSchema.safeParse({
         email: form.email,
         role: form.role,
+        phone: form.phone,
       });
       if (!parsedEdit.success) {
         const fieldErrors: Partial<Record<string, string>> = {};
@@ -221,7 +241,7 @@ export default function EditUserModal({
         _id: resolvedId,
         email: parsedEdit.data.email,
         role: parsedEdit.data.role,
-        phone: form.phone ?? undefined,
+        phone: parsedEdit.data.phone ?? undefined,
         firstName: form.firstName,
         lastName: form.lastName,
       };

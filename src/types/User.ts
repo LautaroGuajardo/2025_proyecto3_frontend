@@ -27,6 +27,7 @@ export interface UserFormData {
   lastName: string;
   phone?: string;
   role: Role;
+  updatedAt?: Date;
 }
 
 export interface UserMessage{
