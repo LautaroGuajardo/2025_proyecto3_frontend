@@ -45,6 +45,8 @@ export default function EditProjectModal({
   >({});
 
   useEffect(() => {
+    // Only update the form when the modal opens or the project reference changes.
+    // Removing `form` from deps prevents overwriting on every input change.
     const nextForm = isEdit && project
       ? {
           _id: project._id,
@@ -57,18 +59,10 @@ export default function EditProjectModal({
         }
       : { _id: "", title: "", description: "", projectType: "" };
 
-    const isSame =
-      form._id === nextForm._id &&
-      form.title === nextForm.title &&
-      form.description === nextForm.description &&
-      form.projectType === nextForm.projectType;
-
-    if (isSame) return;
-
     // Defer the state update so it doesn't run synchronously inside the effect
     const t = setTimeout(() => setForm(nextForm), 0);
     return () => clearTimeout(t);
-  }, [isEdit, project, form]);
+  }, [isEdit, project, open]);
 
   const handleChange = (
     e: React.ChangeEvent<
